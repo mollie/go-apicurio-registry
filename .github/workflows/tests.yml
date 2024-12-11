@@ -1,0 +1,86 @@
+name: Go Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  unit-tests:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Go
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23'
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: go mod tidy
+
+      # Step 4: Run tests
+      - name: Run tests
+        run: go test ./... --short -v
+
+      # Step 5: Upload test results (optional)
+      - name: Upload test results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: '**/test-report.xml'
+
+  integration-tests:
+    name: Run Integration Tests
+    runs-on: ubuntu-latest
+
+    services:
+      apicurio:
+        image: apicurio/apicurio-registry:3.0.5
+        ports:
+          - 9080:8080
+        options: >-
+          --env APICURIO_REST_MUTABILITY_ARTIFACT_VERSION_CONTENT_ENABLED=true
+          --env APICURIO_REST_DELETION_ARTIFACT_ENABLED=true
+          --env APICURIO_REST_DELETION_ARTIFACT_VERSION_ENABLED=true
+          --env APICURIO_REST_DELETION_GROUP_ENABLED=true
+
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Set up Go environment
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23'
+
+      # Install dependencies
+      - name: Install dependencies
+        run: go mod tidy
+
+      # Wait for Apicurio Registry to start
+      - name: Wait for Apicurio Registry
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost:9080/health || [ $i -eq 30 ]; then
+              break
+            fi
+            echo "Waiting for Apicurio Registry to be ready..."
+            sleep 2
+          done
+
+      # Run integration tests
+      - name: Run integration tests
+        run: go test ./... -run Integration -v

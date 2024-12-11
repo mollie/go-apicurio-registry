@@ -1,0 +1,31 @@
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Output of the build process
+bin/
+build/
+
+# Test binaries
+*.test
+
+# Output of `go run`
+*.out
+
+# Directories for dependency management
+vendor/
+
+# IDE and editor configuration files
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Logs and debugging files
+*.log

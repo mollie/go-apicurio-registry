@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  apicurio-registry:
+    image: apicurio/apicurio-registry:3.0.5
+    ports:
+      - "9080:8080"
+    environment:
+      LOG_LEVEL: DEBUG
+      QUARKUS_HTTP_CORS_ORIGINS: '*' # Allow CORS from all origins
+      APICURIO_REST_MUTABILITY_ARTIFACT_VERSION_CONTENT_ENABLED: "true"
+      APICURIO_REST_DELETION_ARTIFACT_ENABLED: "true"
+      APICURIO_REST_DELETION_ARTIFACT_VERSION_ENABLED: "true"
+      APICURIO_REST_DELETION_GROUP_ENABLED: "true"
+
+  apicurio-ui:
+    image: apicurio/apicurio-registry-ui:3.0.5
+    ports:
+      - "9090:8080"
+    environment:
+      REGISTRY_API_URL: "http://localhost:9080/apis/registry/v3"
+
