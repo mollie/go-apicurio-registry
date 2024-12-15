@@ -103,3 +103,22 @@ type ArtifactVersionDetailed struct {
 	Description     string            `json:"description,omitempty"` // Description of the artifact version
 	Labels          map[string]string `json:"labels,omitempty"`      // User-defined name-value pairs
 }
+
+type UserInfo struct {
+	Username    string `json:"username"`
+	DisplayName string `json:"displayName"`
+	Admin       bool   `json:"admin"`
+	Developer   bool   `json:"developer"`
+	Viewer      bool   `json:"viewer"`
+}
+
+type GroupInfo struct {
+	GroupId     string            `json:"groupId"`
+	Name        string            `json:"name"`
+	Description string            `json:"description"`
+	Owner       string            `json:"owner"`
+	CreatedOn   string            `json:"createdOn"`
+	ModifiedBy  string            `json:"modifiedBy"`
+	ModifiedOn  string            `json:"modifiedOn"`
+	Properties  map[string]string `json:"properties,omitempty"`
+}

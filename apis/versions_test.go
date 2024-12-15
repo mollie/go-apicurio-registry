@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/go-playground/validator/v10"
 	"github.com/mollie/go-apicurio-registry/apis"
 	"github.com/mollie/go-apicurio-registry/client"
 	"github.com/mollie/go-apicurio-registry/models"
@@ -12,6 +13,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 )
@@ -24,11 +26,6 @@ const (
 	stubNewContent = `{"type":"record","name":"TestRecord","fields":[{"name":"field1","type":"string"},{"name":"field2","type":"string"}]}`
 	stubReference  = `{"groupId":"test-group","artifactId":"ref-artifact","version":"1.0.0"}`
 )
-
-func setupVersionAPIClient() *apis.ArtifactsAPI {
-	apiClient := setupHTTPClient()
-	return apis.NewArtifactsAPI(apiClient)
-}
 
 func TestVersionsAPI_DeleteArtifactVersion(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
@@ -707,6 +704,37 @@ func TestVersionsAPI_ListArtifactVersions(t *testing.T) {
 		assert.Equal(t, "1.0.0", (*versions)[1].Version)
 	})
 
+	t.Run("InvalidParams", func(t *testing.T) {
+		// Create invalid params
+		params := &models.ListArtifactsVersionsParams{
+			Limit:   -1,                              // Invalid: Limit cannot be negative
+			OrderBy: models.VersionSortBy("invalid"), // Invalid: Unsupported OrderBy value
+		}
+
+		mockClient := &client.Client{BaseURL: "http://example.com", HTTPClient: &http.Client{}}
+		api := apis.NewVersionsAPI(mockClient)
+
+		versions, err := api.ListArtifactVersions(context.Background(), "my-group", "example-artifact", params)
+		assert.Error(t, err)
+		assert.Nil(t, versions)
+
+		var validationErrs validator.ValidationErrors
+		if errors.As(err, &validationErrs) {
+			// Map to track found validation issues
+			foundErrors := map[string]string{}
+
+			for _, fieldErr := range validationErrs {
+				foundErrors[fieldErr.StructField()] = fieldErr.Tag()
+			}
+
+			// Assert specific validation errors
+			assert.Equal(t, "gte", foundErrors["Limit"], "Expected Limit to fail with 'gte' validation tag")
+			assert.Equal(t, "oneof", foundErrors["OrderBy"], "Expected OrderBy to fail with 'oneof' validation tag")
+		} else {
+			t.Errorf("Expected validation errors but got: %v", err)
+		}
+	})
+
 	t.Run("NotFound", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
@@ -1229,6 +1257,7 @@ func TestVersionsAPI_SearchForArtifactVersions(t *testing.T) {
 		params := &models.SearchVersionParams{
 			ArtifactType: models.Json,
 			State:        models.StateEnabled,
+			Version:      version,
 		}
 		versions, err := api.SearchForArtifactVersions(context.Background(), params)
 		assert.NoError(t, err)
@@ -1236,6 +1265,37 @@ func TestVersionsAPI_SearchForArtifactVersions(t *testing.T) {
 		assert.Equal(t, 2, len(*versions))
 		assert.Equal(t, "2.0.0", (*versions)[0].Version)
 		assert.Equal(t, "1.0.0", (*versions)[1].Version)
+	})
+
+	t.Run("Invalid Params", func(t *testing.T) {
+		mockClient := &client.Client{BaseURL: "http://example.com", HTTPClient: &http.Client{}}
+		api := apis.NewVersionsAPI(mockClient)
+
+		// Invalid params: negative limit and invalid version format
+		params := &models.SearchVersionParams{
+			Limit:   -10,                // Invalid: Limit cannot be negative
+			Version: "invalid version!", // Invalid: Does not match regex pattern for version
+		}
+
+		versions, err := api.SearchForArtifactVersions(context.Background(), params)
+		assert.Error(t, err)
+		assert.Nil(t, versions)
+
+		// Check for validation error details
+		var validationErrs validator.ValidationErrors
+		if errors.As(err, &validationErrs) {
+			// Map to track found validation issues
+			foundErrors := map[string]string{}
+			for _, fieldErr := range validationErrs {
+				foundErrors[fieldErr.StructField()] = fieldErr.Tag()
+			}
+
+			// Assert specific validation errors
+			assert.Equal(t, "gte", foundErrors["Limit"], "Expected Limit to fail with 'gte' validation tag")
+			assert.Equal(t, "version", foundErrors["Version"], "Expected Version to fail with 'version' validation tag")
+		} else {
+			t.Errorf("Expected validation errors but got: %v", err)
+		}
 	})
 
 	t.Run("InternalServerError", func(t *testing.T) {
@@ -1319,6 +1379,45 @@ func TestVersionsAPI_SearchForArtifactVersionByContent(t *testing.T) {
 		assert.Equal(t, 2, len(*versions))
 		assert.Equal(t, "2.0.0", (*versions)[0].Version)
 		assert.Equal(t, "1.0.0", (*versions)[1].Version)
+	})
+
+	t.Run("Invalid Params", func(t *testing.T) {
+		mockClient := &client.Client{BaseURL: "http://example.com", HTTPClient: &http.Client{}}
+		api := apis.NewVersionsAPI(mockClient)
+
+		params := &models.SearchVersionByContentParams{
+			ArtifactType: "xx",
+			Offset:       -1,
+			Limit:        -1,
+			Order:        "xx",
+			OrderBy:      "yy",
+			GroupID:      "",
+			ArtifactID:   "",
+		}
+		versions, err := api.SearchForArtifactVersionByContent(context.Background(), "test-content", params)
+		assert.Error(t, err)
+		assert.Nil(t, versions)
+
+		// Check for validation error details
+		var validationErrs validator.ValidationErrors
+		if errors.As(err, &validationErrs) {
+			// Map to track found validation issues
+			foundErrors := map[string]string{}
+			for _, fieldErr := range validationErrs {
+				foundErrors[fieldErr.StructField()] = fieldErr.Tag()
+			}
+
+			fmt.Println(foundErrors)
+
+			// Assert specific validation errors
+			assert.Equal(t, "gte", foundErrors["Limit"], "Expected Limit to fail with 'gte' validation tag")
+			assert.Equal(t, "gte", foundErrors["Offset"], "Expected Offset to fail with 'gte' validation tag")
+			assert.Equal(t, "oneof", foundErrors["Order"], "Expected Order to fail with 'oneof' validation tag")
+			assert.Equal(t, "oneof", foundErrors["OrderBy"], "Expected OrderBy to fail with 'oneof' validation tag")
+			assert.Equal(t, "artifacttype", foundErrors["ArtifactType"], "Expected ArtifactType to fail with 'artifacttype' validation tag")
+		} else {
+			t.Errorf("Expected validation errors but got: %v", err)
+		}
 	})
 
 	t.Run("BadRequest - Empty Content", func(t *testing.T) {
@@ -1526,6 +1625,98 @@ func TestVersionsAPI_UpdateArtifactVersionState(t *testing.T) {
 	})
 }
 
+func TestVersionsAPI_InputValidation(t *testing.T) {
+	t.Run("Empty Group ID", func(t *testing.T) {
+		mockClient := &client.Client{}
+		api := apis.NewVersionsAPI(mockClient)
+
+		err := api.DeleteArtifactVersion(context.Background(), "", "test-artifact", "1.0.0")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "Group ID")
+	})
+
+	t.Run("Empty Artifact ID", func(t *testing.T) {
+		mockClient := &client.Client{}
+		api := apis.NewVersionsAPI(mockClient)
+
+		err := api.DeleteArtifactVersion(context.Background(), "test-group", "", "1.0.0")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "Artifact ID")
+	})
+
+	t.Run("Empty Version Expression", func(t *testing.T) {
+		mockClient := &client.Client{}
+		api := apis.NewVersionsAPI(mockClient)
+
+		err := api.DeleteArtifactVersion(context.Background(), "test-group", "test-artifact", "")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "Version Expression")
+	})
+
+	t.Run("Invalid Group ID", func(t *testing.T) {
+		mockClient := &client.Client{}
+		api := apis.NewVersionsAPI(mockClient)
+
+		err := api.DeleteArtifactVersion(context.Background(), "", "test-artifact", "1.0.0")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "Group ID")
+	})
+
+	t.Run("Invalid Artifact ID", func(t *testing.T) {
+		mockClient := &client.Client{}
+		api := apis.NewVersionsAPI(mockClient)
+
+		err := api.DeleteArtifactVersion(context.Background(), "test-group", "", "1.0.0")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "Artifact ID")
+	})
+
+	t.Run("Invalid Group ID Over 512", func(t *testing.T) {
+		invalidGroupID := strings.Repeat("a", 513)
+		mockClient := &client.Client{}
+		api := apis.NewVersionsAPI(mockClient)
+
+		err := api.DeleteArtifactVersion(context.Background(), invalidGroupID, "test-artifact", "1.0.0")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "Group ID")
+	})
+
+	t.Run("Invalid Artifact ID Over 512", func(t *testing.T) {
+		invalidArtifactId := strings.Repeat("a", 513)
+		mockClient := &client.Client{}
+		api := apis.NewVersionsAPI(mockClient)
+
+		err := api.DeleteArtifactVersion(context.Background(), "test-group", invalidArtifactId, "1.0.0")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "Artifact ID")
+	})
+}
+
+func TestVersionsAPI_HTTPRequestErrors(t *testing.T) {
+	t.Run("Timeout", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			time.Sleep(2 * time.Second) // Simulate a timeout
+		}))
+		defer server.Close()
+
+		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: &http.Client{Timeout: time.Millisecond * 500}}
+		api := apis.NewVersionsAPI(mockClient)
+
+		err := api.DeleteArtifactVersion(context.Background(), "test-group", "test-artifact", "1.0.0")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "Client.Timeout")
+	})
+
+	t.Run("Connection Refused", func(t *testing.T) {
+		mockClient := &client.Client{BaseURL: "http://localhost:9999", HTTPClient: &http.Client{Timeout: time.Second}}
+		api := apis.NewVersionsAPI(mockClient)
+
+		err := api.DeleteArtifactVersion(context.Background(), "test-group", "test-artifact", "1.0.0")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "connection refused")
+	})
+}
+
 /***********************/
 /***** Integration *****/
 /***********************/
@@ -1577,7 +1768,7 @@ func TestVersionsAPIIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		params := &models.ListArtifactsInGroupParams{}
+		params := &models.ListArtifactsVersionsParams{}
 		resp, err := versionsAPI.ListArtifactVersions(ctx, groupID, generatedArtifactID, params)
 		assert.NoError(t, err)
 		assert.GreaterOrEqual(t, len(*resp), 1)
