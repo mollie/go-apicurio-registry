@@ -207,6 +207,80 @@ func TestSystemAPI_GetUIConfig(t *testing.T) {
 	})
 }
 
+func TestSystemAPI_GetCurrentUser(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		mockResponse := models.UserInfo{
+			Username:    "test-user",
+			DisplayName: "my-test-user",
+			Admin:       true,
+			Developer:   true,
+			Viewer:      true,
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Contains(t, r.URL.Path, "/users/me")
+			assert.Equal(t, http.MethodGet, r.Method)
+
+			w.WriteHeader(http.StatusOK)
+			err := json.NewEncoder(w).Encode(mockResponse)
+			assert.NoError(t, err)
+		}))
+		defer server.Close()
+
+		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
+		api := apis.NewSystemAPI(mockClient)
+
+		result, err := api.GetCurrentUser(context.Background())
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, mockResponse, *result)
+	})
+
+	t.Run("Unauthorized", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Contains(t, r.URL.Path, "/users/me")
+			assert.Equal(t, http.MethodGet, r.Method)
+
+			w.WriteHeader(http.StatusUnauthorized)
+			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusUnauthorized, Title: "Unauthorized"})
+			assert.NoError(t, err)
+		}))
+		defer server.Close()
+
+		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
+		api := apis.NewSystemAPI(mockClient)
+
+		result, err := api.GetCurrentUser(context.Background())
+		assert.Error(t, err)
+		assert.Nil(t, result)
+
+		var apiErr *models.APIError
+		ok := errors.As(err, &apiErr)
+		assert.True(t, ok)
+		assert.Equal(t, http.StatusUnauthorized, apiErr.Status)
+		assert.Equal(t, "Unauthorized", apiErr.Title)
+	})
+
+	t.Run("InvalidJSON", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Contains(t, r.URL.Path, "/users/me")
+			assert.Equal(t, http.MethodGet, r.Method)
+
+			w.WriteHeader(http.StatusOK)
+			_, err := w.Write([]byte(`{ invalid json }`))
+			assert.NoError(t, err)
+		}))
+		defer server.Close()
+
+		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
+		api := apis.NewSystemAPI(mockClient)
+
+		result, err := api.GetCurrentUser(context.Background())
+		assert.Error(t, err)
+		assert.Nil(t, result)
+	})
+}
+
 /***********************/
 /***** Integration *****/
 /***********************/
