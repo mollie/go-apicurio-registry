@@ -52,6 +52,30 @@ func TestGetArtifactVersionMetadata(t *testing.T) {
 		assert.Equal(t, "1.0", result.Version)
 	})
 
+	t.Run("InvalidInputs", func(t *testing.T) {
+		ctx := context.Background()
+
+		mockClient := &client.Client{BaseURL: "http://example.com", HTTPClient: http.DefaultClient}
+		api := apis.NewMetadataAPI(mockClient)
+
+		tests := []struct {
+			groupID       string
+			artifactID    string
+			version       string
+			expectedError string
+		}{
+			{"", "artifact-1", "1.0", "Group ID"},
+			{"test-group", "", "1.0", "Artifact ID"},
+			{"test-group", "artifact-1", "", "Version"},
+		}
+
+		for _, test := range tests {
+			_, err := api.GetArtifactVersionMetadata(ctx, test.groupID, test.artifactID, test.version)
+			assert.Error(t, err)
+			assert.Contains(t, err.Error(), test.expectedError)
+		}
+	})
+
 	t.Run("Not Found", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
@@ -86,6 +110,31 @@ func TestUpdateArtifactVersionMetadata(t *testing.T) {
 
 		err := api.UpdateArtifactVersionMetadata(context.Background(), "test-group", "artifact-1", "1.0.0", metadata)
 		assert.NoError(t, err)
+	})
+
+	t.Run("Invalid Inputs", func(t *testing.T) {
+		ctx := context.Background()
+
+		mockClient := &client.Client{BaseURL: "http://example.com", HTTPClient: http.DefaultClient}
+		api := apis.NewMetadataAPI(mockClient)
+
+		tests := []struct {
+			groupID       string
+			artifactID    string
+			version       string
+			metadata      models.UpdateArtifactMetadataRequest
+			expectedError string
+		}{
+			{"", "artifact-1", "1.0", models.UpdateArtifactMetadataRequest{Name: "Updated"}, "Group ID"},
+			{"test-group", "", "1.0", models.UpdateArtifactMetadataRequest{Name: "Updated"}, "Artifact ID"},
+			{"test-group", "artifact-1", "", models.UpdateArtifactMetadataRequest{Name: "Updated"}, "Version"},
+		}
+
+		for _, test := range tests {
+			err := api.UpdateArtifactVersionMetadata(ctx, test.groupID, test.artifactID, test.version, test.metadata)
+			assert.Error(t, err)
+			assert.Contains(t, err.Error(), test.expectedError)
+		}
 	})
 
 	t.Run("Invalid Input", func(t *testing.T) {
@@ -140,6 +189,28 @@ func TestGetArtifactMetadata(t *testing.T) {
 		assert.Equal(t, "user-1", result.ModifiedBy)
 	})
 
+	t.Run("Invalid Inputs", func(t *testing.T) {
+		ctx := context.Background()
+
+		mockClient := &client.Client{BaseURL: "http://example.com", HTTPClient: http.DefaultClient}
+		api := apis.NewMetadataAPI(mockClient)
+
+		tests := []struct {
+			groupID       string
+			artifactID    string
+			expectedError string
+		}{
+			{"", "artifact-1", "Group ID"},
+			{"test-group", "", "Artifact ID"},
+		}
+
+		for _, test := range tests {
+			_, err := api.GetArtifactMetadata(ctx, test.groupID, test.artifactID)
+			assert.Error(t, err)
+			assert.Contains(t, err.Error(), test.expectedError)
+		}
+	})
+
 	t.Run("Artifact Not Found", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
@@ -175,6 +246,29 @@ func TestUpdateArtifactMetadata(t *testing.T) {
 
 		err := api.UpdateArtifactMetadata(context.Background(), "test-group", "artifact-1", metadata)
 		assert.NoError(t, err)
+	})
+
+	t.Run("Invalid Inputs", func(t *testing.T) {
+		ctx := context.Background()
+
+		mockClient := &client.Client{BaseURL: "http://example.com", HTTPClient: http.DefaultClient}
+		api := apis.NewMetadataAPI(mockClient)
+
+		tests := []struct {
+			groupID       string
+			artifactID    string
+			metadata      models.UpdateArtifactMetadataRequest
+			expectedError string
+		}{
+			{"", "artifact-1", models.UpdateArtifactMetadataRequest{Name: "Updated"}, "Group ID"},
+			{"test-group", "", models.UpdateArtifactMetadataRequest{Name: "Updated"}, "Artifact ID"},
+		}
+
+		for _, test := range tests {
+			err := api.UpdateArtifactMetadata(ctx, test.groupID, test.artifactID, test.metadata)
+			assert.Error(t, err)
+			assert.Contains(t, err.Error(), test.expectedError)
+		}
 	})
 
 	t.Run("Invalid Input", func(t *testing.T) {
