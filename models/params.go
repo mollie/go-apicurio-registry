@@ -330,12 +330,25 @@ func (p *SearchVersionByContentParams) ToQuery() url.Values {
 	return query
 }
 
+type GroupOrderBy string
+
+const (
+	GroupOrderByName       GroupOrderBy = "name"
+	GroupOrderByGroupId    GroupOrderBy = "groupId"
+	GroupOrderByCreatedOn  GroupOrderBy = "createdOn"
+	GroupOrderByModifiedOn GroupOrderBy = "modifiedOn"
+)
+
 // ListGroupsParams represents the query parameters for listing groups.
 type ListGroupsParams struct {
-	Limit   int    // Number of artifacts to return (default: 20)
-	Offset  int    // Number of artifacts to skip (default: 0)
-	Order   string // Enum: "asc", "desc"
-	OrderBy string // Enum: "groupId" "createdOn" "modifiedOn"
+	Limit   int          `validate:"omitempty,gte=0"` // Number of artifacts to return (default: 20)
+	Offset  int          `validate:"omitempty,gte=0"` // Number of artifacts to skip (default: 0)
+	Order   Order        `validate:"omitempty,oneof=asc desc"`
+	OrderBy GroupOrderBy `validate:"omitempty,oneof=name createdOn"`
+}
+
+func (p *ListGroupsParams) Validate() error {
+	return structValidator.Struct(p)
 }
 
 // ToQuery converts the ListGroupsParams struct to query parameters.
@@ -348,23 +361,28 @@ func (p *ListGroupsParams) ToQuery() url.Values {
 		query.Set("offset", strconv.Itoa(p.Offset))
 	}
 	if p.Order != "" {
-		query.Set("order", p.Order)
+		query.Set("order", string(p.Order))
 	}
 	if p.OrderBy != "" {
-		query.Set("orderby", p.OrderBy)
+		query.Set("orderby", string(p.OrderBy))
 	}
 	return query
 }
 
 // SearchGroupsParams represents the query parameters for searching groups.
 type SearchGroupsParams struct {
-	Offset      int
-	Limit       int
-	Order       Order
-	OrderBy     OrderBy
-	Labels      map[string]string
-	Description string
-	GroupID     string
+	Offset      int               `validate:"omitempty,gte=0"`
+	Limit       int               `validate:"omitempty,gte=0"`
+	Order       Order             `validate:"omitempty,oneof=asc desc"`
+	OrderBy     GroupOrderBy      `validate:"omitempty,oneof=name createdOn"`
+	Labels      map[string]string `validate:"omitempty"`
+	Description string            `validate:"omitempty"`
+	GroupID     string            `validate:"omitempty,groupid"`
+}
+
+// Validate validates the SearchGroupsParams struct.
+func (p *SearchGroupsParams) Validate() error {
+	return structValidator.Struct(p)
 }
 
 // ToQuery converts the SearchGroupsParams struct to URL query parameters.
