@@ -1,5 +1,10 @@
 package models
 
+import (
+	"encoding/json"
+	"github.com/pkg/errors"
+)
+
 // IfExistsType represents the IfExists types for creating an artifact.
 type IfExistsType string
 
@@ -70,7 +75,29 @@ const (
 	GraphQL  ArtifactType = "GRAPHQL"  // GraphQL artifact type
 	WSDL     ArtifactType = "WSDL"     // WSDL artifact type
 	XSD      ArtifactType = "XSD"      // XSD artifact type
+	XML      ArtifactType = "XML"      // XSD artifact type
 )
+
+// MarshalJSON implements the json.Marshaler interface.
+func (a ArtifactType) MarshalJSON() ([]byte, error) {
+	return json.Marshal(string(a))
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (a *ArtifactType) UnmarshalJSON(data []byte) error {
+	var artifactTypeStr string
+	if err := json.Unmarshal(data, &artifactTypeStr); err != nil {
+		return err
+	}
+
+	parsedType, err := ParseArtifactType(artifactTypeStr)
+	if err != nil {
+		return err
+	}
+
+	*a = parsedType
+	return nil
+}
 
 // ParseArtifactType parses a string and returns the corresponding ArtifactType.
 func ParseArtifactType(artifactType string) (ArtifactType, error) {
@@ -93,8 +120,10 @@ func ParseArtifactType(artifactType string) (ArtifactType, error) {
 		return WSDL, nil
 	case string(XSD):
 		return XSD, nil
+	case string(XML):
+		return XML, nil
 	default:
-		return "", ErrUnknownArtifactType
+		return "", errors.Wrapf(ErrUnknownArtifactType, "provided string: %s", artifactType)
 	}
 }
 

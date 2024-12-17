@@ -46,7 +46,7 @@ func (api *AdminAPI) CreateGlobalRule(ctx context.Context, rule models.Rule, lev
 	url := fmt.Sprintf("%s/admin/rules", api.Client.BaseURL)
 
 	// Prepare the request body
-	body := models.CreateUpdateGlobalRuleRequest{
+	body := models.CreateUpdateRuleRequest{
 		RuleType: rule,
 		Config:   level,
 	}
@@ -81,7 +81,7 @@ func (api *AdminAPI) GetGlobalRule(ctx context.Context, rule models.Rule) (model
 		return "", err
 	}
 
-	var globalRule models.GlobalRuleResponse
+	var globalRule models.RuleResponse
 	if err := handleResponse(resp, http.StatusOK, &globalRule); err != nil {
 		return "", err
 	}
@@ -96,7 +96,7 @@ func (api *AdminAPI) UpdateGlobalRule(ctx context.Context, rule models.Rule, lev
 	url := fmt.Sprintf("%s/admin/rules/%s", api.Client.BaseURL, rule)
 
 	// Prepare the request body
-	body := models.CreateUpdateGlobalRuleRequest{
+	body := models.CreateUpdateRuleRequest{
 		RuleType: rule,
 		Config:   level,
 	}
@@ -105,7 +105,7 @@ func (api *AdminAPI) UpdateGlobalRule(ctx context.Context, rule models.Rule, lev
 		return err
 	}
 
-	var globalRule models.GlobalRuleResponse
+	var globalRule models.RuleResponse
 	if err := handleResponse(resp, http.StatusOK, &globalRule); err != nil {
 		return err
 	}
@@ -124,6 +124,30 @@ func (api *AdminAPI) DeleteGlobalRule(ctx context.Context, rule models.Rule) err
 	}
 
 	return handleResponse(resp, http.StatusNoContent, nil)
+}
+
+// ListArtifactTypes Gets a list of all the currently configured artifact types (if any).
+// GET admin/config/artifactTypes
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifact-Type/operation/listArtifactTypes
+func (api *AdminAPI) ListArtifactTypes(ctx context.Context) ([]models.ArtifactType, error) {
+	url := fmt.Sprintf("%s/admin/config/artifactTypes", api.Client.BaseURL)
+	resp, err := api.executeRequest(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var artifactTypesResponse []models.ArtifactTypeResponse
+	if err := handleResponse(resp, http.StatusOK, &artifactTypesResponse); err != nil {
+		return nil, err
+	}
+
+	var artifactTypes []models.ArtifactType
+	for _, item := range artifactTypesResponse {
+		artifactTypes = append(artifactTypes, item.Name)
+	}
+
+	return artifactTypes, nil
+
 }
 
 // executeRequest handles the creation and execution of an HTTP request.

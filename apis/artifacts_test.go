@@ -55,11 +55,106 @@ func cleanup(t *testing.T, artifactsAPI *apis.ArtifactsAPI) {
 	}
 }
 
-func TestSearchArtifacts(t *testing.T) {
+func TestArtifactsAPI_GetArtifactByGlobalID(t *testing.T) {
+	t.Run("Success-Without-ArtifactType", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/ids/globalIds/1", r.URL.Path)
+			assert.Equal(t, http.MethodGet, r.Method)
+
+			w.WriteHeader(http.StatusOK)
+			_, err := w.Write([]byte(stubArtifactContent))
+			assert.NoError(t, err)
+		}))
+		defer server.Close()
+
+		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
+		api := apis.NewArtifactsAPI(mockClient)
+
+		result, err := api.GetArtifactByGlobalID(context.Background(), 1, nil)
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, stubArtifactContent, result.Content)
+	})
+
+	t.Run("Success-With-ArtifactType", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/ids/globalIds/1", r.URL.Path)
+			assert.Equal(t, http.MethodGet, r.Method)
+
+			w.Header().Set("X-Registry-ArtifactType", "JSON")
+			w.WriteHeader(http.StatusOK)
+			_, err := w.Write([]byte(stubArtifactContent))
+			assert.NoError(t, err)
+		}))
+		defer server.Close()
+
+		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
+		api := apis.NewArtifactsAPI(mockClient)
+		params := models.GetArtifactByGlobalIDParams{
+			ReturnArtifactType: true,
+		}
+		result, err := api.GetArtifactByGlobalID(context.Background(), 1, &params)
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, stubArtifactContent, result.Content)
+		assert.Equal(t, models.Json, result.ArtifactType)
+	})
+
+	t.Run("Not Found", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusNotFound)
+			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusNotFound, Title: TitleNotFound})
+			assert.NoError(t, err)
+		}))
+		defer server.Close()
+
+		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
+		api := apis.NewArtifactsAPI(mockClient)
+
+		result, err := api.GetArtifactByGlobalID(context.Background(), 1, nil)
+		assert.Error(t, err)
+		assert.Nil(t, result)
+
+		var apiErr *models.APIError
+		ok := errors.As(err, &apiErr)
+		assert.True(t, ok)
+		assert.Equal(t, http.StatusNotFound, apiErr.Status)
+		assert.Equal(t, TitleNotFound, apiErr.Title)
+	})
+
+	t.Run("Internal Server Error", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError})
+			assert.NoError(t, err)
+		}))
+		defer server.Close()
+
+		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
+		api := apis.NewArtifactsAPI(mockClient)
+
+		result, err := api.GetArtifactByGlobalID(context.Background(), 1, nil)
+		assert.Error(t, err)
+		assert.Nil(t, result)
+
+		var apiErr *models.APIError
+		ok := errors.As(err, &apiErr)
+		assert.True(t, ok)
+		assert.Equal(t, http.StatusInternalServerError, apiErr.Status)
+		assert.Equal(t, TitleInternalServerError, apiErr.Title)
+	})
+}
+
+func TestArtifactsAPI_SearchArtifacts(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockResponse := models.SearchArtifactsAPIResponse{
 			Artifacts: []models.SearchedArtifact{
-				{GroupId: "test-group", ArtifactId: "artifact-1", Name: "Test Artifact"},
+				{
+					GroupId:      "test-group",
+					ArtifactId:   "artifact-1",
+					Name:         "Test Artifact",
+					ArtifactType: models.Avro,
+				},
 			},
 			Count: 1,
 		}
@@ -82,9 +177,11 @@ func TestSearchArtifacts(t *testing.T) {
 		assert.NotNil(t, result)
 	})
 
-	t.Run("Server Error", func(t *testing.T) {
+	t.Run("Internal Server Error", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
+			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError})
+			assert.NoError(t, err)
 		}))
 		defer server.Close()
 
@@ -95,14 +192,25 @@ func TestSearchArtifacts(t *testing.T) {
 		result, err := api.SearchArtifacts(context.Background(), params)
 		assert.Error(t, err)
 		assert.Nil(t, result)
+
+		var apiErr *models.APIError
+		ok := errors.As(err, &apiErr)
+		assert.True(t, ok)
+		assert.Equal(t, http.StatusInternalServerError, apiErr.Status)
+		assert.Equal(t, TitleInternalServerError, apiErr.Title)
 	})
 }
 
-func TestSearchArtifactsByContent(t *testing.T) {
+func TestArtifactsAPI_SearchArtifactsByContent(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockResponse := models.SearchArtifactsAPIResponse{
 			Artifacts: []models.SearchedArtifact{
-				{GroupId: "test-group", ArtifactId: "artifact-1", Name: "Test Artifact"},
+				{
+					GroupId:      "test-group",
+					ArtifactId:   "artifact-1",
+					Name:         "Test Artifact",
+					ArtifactType: models.Avro,
+				},
 			},
 			Count: 1,
 		}
@@ -128,6 +236,8 @@ func TestSearchArtifactsByContent(t *testing.T) {
 	t.Run("Invalid Content", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusBadRequest)
+			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusBadRequest, Title: TitleBadRequest})
+			assert.NoError(t, err)
 		}))
 		defer server.Close()
 
@@ -138,10 +248,16 @@ func TestSearchArtifactsByContent(t *testing.T) {
 		result, err := api.SearchArtifactsByContent(context.Background(), []byte(""), params)
 		assert.Error(t, err)
 		assert.Nil(t, result)
+
+		var apiErr *models.APIError
+		ok := errors.As(err, &apiErr)
+		assert.True(t, ok)
+		assert.Equal(t, http.StatusBadRequest, apiErr.Status)
+		assert.Equal(t, TitleBadRequest, apiErr.Title)
 	})
 }
 
-func TestListArtifactReferences(t *testing.T) {
+func TestArtifactsAPI_ListArtifactReferences(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockReferences := []models.ArtifactReference{
 			{GroupID: "group-1", ArtifactID: "artifact-1", Version: "v1"},
@@ -168,6 +284,8 @@ func TestListArtifactReferences(t *testing.T) {
 	t.Run("Not Found", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
+			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusNotFound, Title: TitleNotFound})
+			assert.NoError(t, err)
 		}))
 		defer server.Close()
 
@@ -177,16 +295,22 @@ func TestListArtifactReferences(t *testing.T) {
 		result, err := api.ListArtifactReferences(context.Background(), 123)
 		assert.Error(t, err)
 		assert.Nil(t, result)
+
+		var apiErr *models.APIError
+		ok := errors.As(err, &apiErr)
+		assert.True(t, ok)
+		assert.Equal(t, http.StatusNotFound, apiErr.Status)
+		assert.Equal(t, TitleNotFound, apiErr.Title)
 	})
 }
 
-func TestListArtifactReferencesByGlobalID(t *testing.T) {
+func TestArtifactsAPI_ListArtifactReferencesByGlobalID(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockReferences := []models.ArtifactReference{
 			{GroupID: "group-1", ArtifactID: "artifact-1", Version: "v1"},
 		}
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, "/globalIds")
+			assert.Contains(t, r.URL.Path, "ids/globalIds")
 			assert.Equal(t, http.MethodGet, r.Method)
 
 			w.WriteHeader(http.StatusOK)
@@ -205,9 +329,11 @@ func TestListArtifactReferencesByGlobalID(t *testing.T) {
 		assert.Len(t, *result, 1)
 	})
 
-	t.Run("Error", func(t *testing.T) {
+	t.Run("Internal Server Error", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusInternalServerError)
+			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError})
+			assert.NoError(t, err)
 		}))
 		defer server.Close()
 
@@ -218,10 +344,16 @@ func TestListArtifactReferencesByGlobalID(t *testing.T) {
 		result, err := api.ListArtifactReferencesByGlobalID(context.Background(), 123, params)
 		assert.Error(t, err)
 		assert.Nil(t, result)
+
+		var apiErr *models.APIError
+		ok := errors.As(err, &apiErr)
+		assert.True(t, ok)
+		assert.Equal(t, http.StatusInternalServerError, apiErr.Status)
+		assert.Equal(t, TitleInternalServerError, apiErr.Title)
 	})
 }
 
-func TestListArtifactReferencesByHash(t *testing.T) {
+func TestArtifactsAPI_ListArtifactReferencesByHash(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockReferences := []models.ArtifactReference{
 			{GroupID: "group-1", ArtifactID: "artifact-1", Version: "v1"},
@@ -245,9 +377,11 @@ func TestListArtifactReferencesByHash(t *testing.T) {
 		assert.Len(t, *result, 1)
 	})
 
-	t.Run("Not Found", func(t *testing.T) {
+	t.Run("Internal Server Error", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusNotFound)
+			w.WriteHeader(http.StatusInternalServerError)
+			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError})
+			assert.NoError(t, err)
 		}))
 		defer server.Close()
 
@@ -257,14 +391,25 @@ func TestListArtifactReferencesByHash(t *testing.T) {
 		result, err := api.ListArtifactReferencesByHash(context.Background(), "hash-123")
 		assert.Error(t, err)
 		assert.Nil(t, result)
+
+		var apiErr *models.APIError
+		ok := errors.As(err, &apiErr)
+		assert.True(t, ok)
+		assert.Equal(t, http.StatusInternalServerError, apiErr.Status)
+		assert.Equal(t, TitleInternalServerError, apiErr.Title)
 	})
 }
 
-func TestListArtifactsInGroup(t *testing.T) {
+func TestArtifactsAPI_ListArtifactsInGroup(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockResponse := models.ListArtifactsResponse{
 			Artifacts: []models.SearchedArtifact{
-				{GroupId: "group-1", ArtifactId: "artifact-1", Name: "Test Artifact"},
+				{
+					GroupId:      "group-1",
+					ArtifactId:   "artifact-1",
+					Name:         "Test Artifact",
+					ArtifactType: models.XML,
+				},
 			},
 			Count: 1,
 		}
@@ -288,9 +433,11 @@ func TestListArtifactsInGroup(t *testing.T) {
 		assert.Len(t, result.Artifacts, 1)
 	})
 
-	t.Run("Not Found", func(t *testing.T) {
+	t.Run("Internal Server Error", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusNotFound)
+			w.WriteHeader(http.StatusInternalServerError)
+			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError})
+			assert.NoError(t, err)
 		}))
 		defer server.Close()
 
@@ -301,10 +448,16 @@ func TestListArtifactsInGroup(t *testing.T) {
 		result, err := api.ListArtifactsInGroup(context.Background(), "group-1", params)
 		assert.Error(t, err)
 		assert.Nil(t, result)
+
+		var apiErr *models.APIError
+		ok := errors.As(err, &apiErr)
+		assert.True(t, ok)
+		assert.Equal(t, http.StatusInternalServerError, apiErr.Status)
+		assert.Equal(t, TitleInternalServerError, apiErr.Title)
 	})
 }
 
-func TestGetArtifactContentByHash(t *testing.T) {
+func TestArtifactsAPI_GetArtifactContentByHash(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockContent := models.ArtifactContent{
 			Content:      "{\"key\":\"value\"}",
@@ -334,6 +487,8 @@ func TestGetArtifactContentByHash(t *testing.T) {
 	t.Run("Not Found", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
+			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusNotFound, Title: TitleNotFound})
+			assert.NoError(t, err)
 		}))
 		defer server.Close()
 
@@ -343,10 +498,38 @@ func TestGetArtifactContentByHash(t *testing.T) {
 		result, err := api.GetArtifactContentByHash(context.Background(), "hash-123")
 		assert.Error(t, err)
 		assert.Nil(t, result)
+
+		var apiErr *models.APIError
+		ok := errors.As(err, &apiErr)
+		assert.True(t, ok)
+		assert.Equal(t, http.StatusNotFound, apiErr.Status)
+		assert.Equal(t, TitleNotFound, apiErr.Title)
+	})
+
+	t.Run("Internal Server Error", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError})
+			assert.NoError(t, err)
+		}))
+		defer server.Close()
+
+		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
+		api := apis.NewArtifactsAPI(mockClient)
+
+		result, err := api.GetArtifactContentByHash(context.Background(), "hash-123")
+		assert.Error(t, err)
+		assert.Nil(t, result)
+
+		var apiErr *models.APIError
+		ok := errors.As(err, &apiErr)
+		assert.True(t, ok)
+		assert.Equal(t, http.StatusInternalServerError, apiErr.Status)
+		assert.Equal(t, TitleInternalServerError, apiErr.Title)
 	})
 }
 
-func TestGetArtifactContentByID(t *testing.T) {
+func TestArtifactsAPI_GetArtifactContentByID(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockContent := models.ArtifactContent{
 			Content:      "{\"key\":\"value\"}",
@@ -376,6 +559,8 @@ func TestGetArtifactContentByID(t *testing.T) {
 	t.Run("Not Found", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
+			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusNotFound, Title: TitleNotFound})
+			assert.NoError(t, err)
 		}))
 		defer server.Close()
 
@@ -385,10 +570,38 @@ func TestGetArtifactContentByID(t *testing.T) {
 		result, err := api.GetArtifactContentByID(context.Background(), 123)
 		assert.Error(t, err)
 		assert.Nil(t, result)
+
+		var apiErr *models.APIError
+		ok := errors.As(err, &apiErr)
+		assert.True(t, ok)
+		assert.Equal(t, http.StatusNotFound, apiErr.Status)
+		assert.Equal(t, TitleNotFound, apiErr.Title)
+	})
+
+	t.Run("Internal Server Error", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError})
+			assert.NoError(t, err)
+		}))
+		defer server.Close()
+
+		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
+		api := apis.NewArtifactsAPI(mockClient)
+
+		result, err := api.GetArtifactContentByID(context.Background(), 123)
+		assert.Error(t, err)
+		assert.Nil(t, result)
+
+		var apiErr *models.APIError
+		ok := errors.As(err, &apiErr)
+		assert.True(t, ok)
+		assert.Equal(t, http.StatusInternalServerError, apiErr.Status)
+		assert.Equal(t, TitleInternalServerError, apiErr.Title)
 	})
 }
 
-func TestDeleteArtifactsInGroup(t *testing.T) {
+func TestArtifactsAPI_DeleteArtifactsInGroup(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNoContent)
@@ -402,9 +615,11 @@ func TestDeleteArtifactsInGroup(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("Forbidden", func(t *testing.T) {
+	t.Run("Internal Server Error", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusForbidden)
+			w.WriteHeader(http.StatusInternalServerError)
+			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError})
+			assert.NoError(t, err)
 		}))
 		defer server.Close()
 
@@ -413,10 +628,16 @@ func TestDeleteArtifactsInGroup(t *testing.T) {
 
 		err := api.DeleteArtifactsInGroup(context.Background(), "test-group")
 		assert.Error(t, err)
+
+		var apiErr *models.APIError
+		ok := errors.As(err, &apiErr)
+		assert.True(t, ok)
+		assert.Equal(t, http.StatusInternalServerError, apiErr.Status)
+		assert.Equal(t, TitleInternalServerError, apiErr.Title)
 	})
 }
 
-func TestDeleteArtifact(t *testing.T) {
+func TestArtifactsAPI_DeleteArtifact(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNoContent)
@@ -428,11 +649,34 @@ func TestDeleteArtifact(t *testing.T) {
 
 		err := api.DeleteArtifact(context.Background(), "test-group", "artifact-1")
 		assert.NoError(t, err)
+	})
+
+	t.Run("Not Found", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusNotFound)
+			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusNotFound, Title: TitleNotFound})
+			assert.NoError(t, err)
+		}))
+		defer server.Close()
+
+		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
+		api := apis.NewArtifactsAPI(mockClient)
+
+		err := api.DeleteArtifact(context.Background(), "test-group", "artifact-1")
+		assert.Error(t, err)
+
+		var apiErr *models.APIError
+		ok := errors.As(err, &apiErr)
+		assert.True(t, ok)
+		assert.Equal(t, http.StatusNotFound, apiErr.Status)
+		assert.Equal(t, TitleNotFound, apiErr.Title)
 	})
 
 	t.Run("Not Allowed", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusMethodNotAllowed)
+			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusMethodNotAllowed, Title: TitleMethodNotAllowed})
+			assert.NoError(t, err)
 		}))
 		defer server.Close()
 
@@ -441,11 +685,37 @@ func TestDeleteArtifact(t *testing.T) {
 
 		err := api.DeleteArtifact(context.Background(), "test-group", "artifact-1")
 		assert.Error(t, err)
-		assert.Equal(t, apis.ErrMethodNotAllowed, err)
+
+		var apiErr *models.APIError
+		ok := errors.As(err, &apiErr)
+		assert.True(t, ok)
+		assert.Equal(t, http.StatusMethodNotAllowed, apiErr.Status)
+		assert.Equal(t, TitleMethodNotAllowed, apiErr.Title)
+	})
+
+	t.Run("Internal Server Error", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError})
+			assert.NoError(t, err)
+		}))
+		defer server.Close()
+
+		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
+		api := apis.NewArtifactsAPI(mockClient)
+
+		err := api.DeleteArtifact(context.Background(), "test-group", "artifact-1")
+		assert.Error(t, err)
+
+		var apiErr *models.APIError
+		ok := errors.As(err, &apiErr)
+		assert.True(t, ok)
+		assert.Equal(t, http.StatusInternalServerError, apiErr.Status)
+		assert.Equal(t, TitleInternalServerError, apiErr.Title)
 	})
 }
 
-func TestCreateArtifact(t *testing.T) {
+func TestArtifactsAPI_CreateArtifact(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockResponse := models.CreateArtifactResponse{
 			Artifact: models.ArtifactDetail{
@@ -486,9 +756,11 @@ func TestCreateArtifact(t *testing.T) {
 		assert.Equal(t, "artifact-1", result.ArtifactID)
 	})
 
-	t.Run("Conflict", func(t *testing.T) {
+	t.Run("Bad Request", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusConflict)
+			w.WriteHeader(http.StatusBadRequest)
+			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusBadRequest, Title: TitleBadRequest})
+			assert.NoError(t, err)
 		}))
 		defer server.Close()
 
@@ -505,10 +777,96 @@ func TestCreateArtifact(t *testing.T) {
 			},
 		}
 
-		params := &models.CreateArtifactParams{}
+		params := &models.CreateArtifactParams{
+			IfExists:  models.IfExistsCreate,
+			Canonical: false,
+			DryRun:    false,
+		}
 		result, err := api.CreateArtifact(context.Background(), "test-group", artifact, params)
 		assert.Error(t, err)
 		assert.Nil(t, result)
+
+		fmt.Println(err)
+
+		var apiErr *models.APIError
+		ok := errors.As(err, &apiErr)
+		assert.True(t, ok)
+		assert.Equal(t, http.StatusBadRequest, apiErr.Status)
+		assert.Equal(t, TitleBadRequest, apiErr.Title)
+	})
+
+	t.Run("Conflict", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusConflict)
+			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusConflict, Title: TitleConflict})
+			assert.NoError(t, err)
+		}))
+		defer server.Close()
+
+		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
+		api := apis.NewArtifactsAPI(mockClient)
+
+		artifact := models.CreateArtifactRequest{
+			ArtifactType: models.Json,
+			FirstVersion: models.CreateVersionRequest{
+				Version: "1.0.0",
+				Content: models.CreateContentRequest{
+					Content: "{\"key\":\"value\"}",
+				},
+			},
+		}
+
+		params := &models.CreateArtifactParams{
+			IfExists:  models.IfExistsCreate,
+			Canonical: false,
+			DryRun:    false,
+		}
+		result, err := api.CreateArtifact(context.Background(), "test-group", artifact, params)
+		assert.Error(t, err)
+		assert.Nil(t, result)
+
+		var apiErr *models.APIError
+		ok := errors.As(err, &apiErr)
+		assert.True(t, ok)
+		assert.Equal(t, http.StatusConflict, apiErr.Status)
+		assert.Equal(t, TitleConflict, apiErr.Title)
+	})
+
+	t.Run("Internal Server Error", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError})
+			assert.NoError(t, err)
+		}))
+		defer server.Close()
+
+		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
+		api := apis.NewArtifactsAPI(mockClient)
+
+		artifact := models.CreateArtifactRequest{
+			ArtifactType: models.Json,
+			FirstVersion: models.CreateVersionRequest{
+				Version: "1.0.0",
+				Content: models.CreateContentRequest{
+					Content: "{\"key\":\"value\"}",
+				},
+			},
+		}
+
+		params := &models.CreateArtifactParams{
+			IfExists:  models.IfExistsCreate,
+			Canonical: false,
+			DryRun:    false,
+		}
+		result, err := api.CreateArtifact(context.Background(), "test-group", artifact, params)
+		assert.Error(t, err)
+		assert.Nil(t, result)
+
+		var apiErr *models.APIError
+		ok := errors.As(err, &apiErr)
+		assert.True(t, ok)
+		assert.Equal(t, http.StatusInternalServerError, apiErr.Status)
+		assert.Equal(t, TitleInternalServerError, apiErr.Title)
 	})
 }
 
@@ -758,7 +1116,7 @@ func TestArtifactsAPI_DeleteAllArtifactRule(t *testing.T) {
 
 func TestArtifactsAPI_GetArtifactRule(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		mockResponse := models.GlobalRuleResponse{
+		mockResponse := models.RuleResponse{
 			RuleType: models.RuleValidity,
 			Config:   models.ValidityLevelFull,
 		}
@@ -835,7 +1193,7 @@ func TestArtifactsAPI_GetArtifactRule(t *testing.T) {
 func TestArtifactsAPI_UpdateArtifactRule(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockRule := models.RuleValidity
-		mockResponse := models.GlobalRuleResponse{
+		mockResponse := models.RuleResponse{
 			RuleType: mockRule,
 			Config:   models.ValidityLevelFull,
 		}
@@ -1097,5 +1455,71 @@ func TestArtifactsAPIIntegration(t *testing.T) {
 		// Delete the artifact
 		err = artifactsAPI.DeleteArtifact(ctx, groupID, artifactID)
 		assert.NoError(t, err)
+	})
+
+	// Test Artifact rules
+	t.Run("AllArtifactRules", func(t *testing.T) {
+		randomArtifactID, err := generateArtifactForTest(ctx, artifactsAPI)
+		assert.NoError(t, err)
+
+		// List Artifact rules
+		rules, err := artifactsAPI.ListArtifactRules(ctx, stubGroupId, randomArtifactID)
+		assert.NoError(t, err)
+		assert.Len(t, rules, 0)
+
+		// Create a rule
+		err = artifactsAPI.CreateArtifactRule(ctx, stubGroupId, randomArtifactID, models.RuleValidity, models.ValidityLevelFull)
+		assert.NoError(t, err)
+
+		// List artifact rules
+		rules, err = artifactsAPI.ListArtifactRules(ctx, stubGroupId, randomArtifactID)
+		assert.NoError(t, err)
+		assert.Len(t, rules, 1)
+		assert.Equal(t, models.RuleValidity, rules[0])
+
+		// Get the rule
+		rule, err := artifactsAPI.GetArtifactRule(ctx, stubGroupId, randomArtifactID, models.RuleValidity)
+		assert.NoError(t, err)
+		assert.Equal(t, models.ValidityLevelFull, rule)
+
+		// Update the rule
+		err = artifactsAPI.UpdateArtifactRule(ctx, stubGroupId, randomArtifactID, models.RuleValidity, models.ValidityLevelSyntaxOnly)
+		assert.NoError(t, err)
+
+		// Get the rule
+		rule, err = artifactsAPI.GetArtifactRule(ctx, stubGroupId, randomArtifactID, models.RuleValidity)
+		assert.NoError(t, err)
+		assert.Equal(t, models.ValidityLevelSyntaxOnly, rule)
+
+		// Delete the rule
+		err = artifactsAPI.DeleteArtifactRule(ctx, stubGroupId, randomArtifactID, models.RuleValidity)
+		assert.NoError(t, err)
+
+		// List artifact rules
+		rules, err = artifactsAPI.ListArtifactRules(ctx, stubGroupId, randomArtifactID)
+		assert.NoError(t, err)
+		assert.Len(t, rules, 0)
+
+		// Create three rules
+		err = artifactsAPI.CreateArtifactRule(ctx, stubGroupId, randomArtifactID, models.RuleValidity, models.ValidityLevelFull)
+		assert.NoError(t, err)
+		err = artifactsAPI.CreateArtifactRule(ctx, stubGroupId, randomArtifactID, models.RuleCompatibility, models.CompatibilityLevelFull)
+		assert.NoError(t, err)
+		err = artifactsAPI.CreateArtifactRule(ctx, stubGroupId, randomArtifactID, models.RuleIntegrity, models.IntegrityLevelFull)
+		assert.NoError(t, err)
+
+		// List artifact rules
+		rules, err = artifactsAPI.ListArtifactRules(ctx, stubGroupId, randomArtifactID)
+		assert.NoError(t, err)
+		assert.Len(t, rules, 3)
+
+		// Delete all rules
+		err = artifactsAPI.DeleteAllArtifactRule(ctx, stubGroupId, randomArtifactID)
+		assert.NoError(t, err)
+
+		// List artifact rules
+		rules, err = artifactsAPI.ListArtifactRules(ctx, stubGroupId, randomArtifactID)
+		assert.NoError(t, err)
+		assert.Len(t, rules, 0)
 	})
 }

@@ -260,7 +260,7 @@ func (api *VersionsAPI) DeleteArtifactVersionComment(
 func (api *VersionsAPI) ListArtifactVersions(
 	ctx context.Context,
 	groupId, artifactId string,
-	params *models.ListArtifactsInGroupParams,
+	params *models.ListArtifactsVersionsParams,
 ) (*[]models.ArtifactVersion, error) {
 	if err := validateInput(groupId, regexGroupIDArtifactID, "Group ID"); err != nil {
 		return nil, err
@@ -271,6 +271,9 @@ func (api *VersionsAPI) ListArtifactVersions(
 
 	query := ""
 	if params != nil {
+		if err := params.Validate(); err != nil {
+			return nil, errors.Wrap(err, "invalid parameters provided")
+		}
 		query = "?" + params.ToQuery().Encode()
 	}
 	url := fmt.Sprintf("%s/groups/%s/artifacts/%s/versions%s", api.Client.BaseURL, groupId, artifactId, query)
@@ -340,6 +343,9 @@ func (api *VersionsAPI) GetArtifactVersionContent(
 
 	query := ""
 	if params != nil {
+		if err := params.Validate(); err != nil {
+			return nil, errors.Wrap(err, "invalid parameters provided")
+		}
 		query = "?" + params.ToQuery().Encode()
 	}
 	url := fmt.Sprintf("%s/groups/%s/artifacts/%s/versions/%s/content%s", api.Client.BaseURL, groupId, artifactId, versionExpression, query)
@@ -393,6 +399,9 @@ func (api *VersionsAPI) SearchForArtifactVersions(
 
 	query := ""
 	if params != nil {
+		if err := params.Validate(); err != nil {
+			return nil, errors.Wrap(err, "invalid parameters provided")
+		}
 		query = params.ToQuery().Encode()
 	}
 
@@ -419,6 +428,9 @@ func (api *VersionsAPI) SearchForArtifactVersionByContent(
 ) (*[]models.ArtifactVersion, error) {
 	query := ""
 	if params != nil {
+		if err := params.Validate(); err != nil {
+			return nil, errors.Wrap(err, "invalid parameters provided")
+		}
 		query = params.ToQuery().Encode()
 	}
 

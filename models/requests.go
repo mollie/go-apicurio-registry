@@ -44,7 +44,18 @@ type StateRequest struct {
 	State State `json:"state"`
 }
 
-type CreateUpdateGlobalRuleRequest struct {
+type CreateUpdateRuleRequest struct {
 	RuleType Rule      `json:"ruleType"`
 	Config   RuleLevel `json:"config"`
+}
+
+type CreateGroupRequest struct {
+	GroupID     string            `json:"groupId"`
+	Description string            `json:"description"`
+	Labels      map[string]string `json:"labels"`
+}
+
+type UpdateGroupRequest struct {
+	Description string            `json:"description"`
+	Labels      map[string]string `json:"labels"`
 }
