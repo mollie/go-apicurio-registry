@@ -18,12 +18,15 @@ const (
 var (
 	regexGroupIDArtifactID = regexp.MustCompile(`^.{1,512}$`)
 	regexVersion           = regexp.MustCompile(`[a-zA-Z0-9._\-+]{1,256}`)
+	regexBranchID          = regexp.MustCompile(`[a-zA-Z0-9._\-+]{1,256}`)
+
+	ErrInvalidInput = errors.New("input did not pass validation with regex")
 )
 
 // ErrInvalidInput is returned when an input validation fails.
 func validateInput(input string, regex *regexp.Regexp, name string) error {
 	if match := regex.MatchString(input); !match {
-		return errors.Wrapf(ErrInvalidInput, "%s='%s'", name, input)
+		return errors.Wrapf(ErrInvalidInput, "%s='%s', regex=%s", name, input, regex.String())
 	}
 	return nil
 }
@@ -59,7 +62,7 @@ func handleResponse(resp *http.Response, expectedStatus int, result interface{})
 	if resp.StatusCode != expectedStatus {
 		apiError, parseErr := parseAPIError(resp)
 		if parseErr != nil {
-			return errors.Wrap(parseErr, "unexpected server error")
+			return errors.Wrapf(parseErr, "unexpected server error: %d", resp.StatusCode)
 		}
 		return apiError
 	}

@@ -257,7 +257,12 @@ func (p *ListArtifactsInGroupParams) ToQuery() url.Values {
 
 // ArtifactVersionReferencesParams represents the query parameters for GetArtifactVersionReferences.
 type ArtifactVersionReferencesParams struct {
-	RefType RefType // "INBOUND" or "OUTBOUND"
+	RefType RefType `validate:"omitempty,oneof=INBOUND OUTBOUND"` // "INBOUND" or "OUTBOUND"
+}
+
+// Validate validates the ListArtifactsInGroupParams struct.
+func (p *ArtifactVersionReferencesParams) Validate() error {
+	return structValidator.Struct(p)
 }
 
 // ToQuery converts the ArtifactVersionReferencesParams struct to URL query parameters.
@@ -274,6 +279,11 @@ type ArtifactReferenceParams struct {
 	HandleReferencesType HandleReferencesType `validate:"omitempty,oneof=PRESERVE DEREFERENCE REWRITE"`
 }
 
+// Validate validates the ArtifactReferenceParams struct.
+func (p *ArtifactReferenceParams) Validate() error {
+	return structValidator.Struct(p)
+}
+
 // ToQuery converts the ArtifactReferenceParams into URL query parameters.
 func (p *ArtifactReferenceParams) ToQuery() url.Values {
 	query := url.Values{}
@@ -281,11 +291,6 @@ func (p *ArtifactReferenceParams) ToQuery() url.Values {
 		query.Set("references", string(p.HandleReferencesType))
 	}
 	return query
-}
-
-// Validate validates the ArtifactReferenceParams struct.
-func (p *ArtifactReferenceParams) Validate() error {
-	return structValidator.Struct(p)
 }
 
 // SearchVersionParams represents the query parameters for searching artifact versions.
@@ -491,6 +496,10 @@ type ListArtifactsVersionsParams struct {
 	OrderBy VersionSortBy `validate:"omitempty,oneof=name version createdOn"` // Enum: only: name version createdOn
 }
 
+func (p *ListArtifactsVersionsParams) Validate() error {
+	return structValidator.Struct(p)
+}
+
 // ToQuery converts the ListArtifactsInGroupParams struct to query parameters.
 func (p *ListArtifactsVersionsParams) ToQuery() url.Values {
 	query := url.Values{}
@@ -509,8 +518,25 @@ func (p *ListArtifactsVersionsParams) ToQuery() url.Values {
 	return query
 }
 
-func (p *ListArtifactsVersionsParams) Validate() error {
+type ListBranchesParams struct {
+	Offset int `validate:"omitempty,gte=0"` // Number of branches to skip
+	Limit  int `validate:"omitempty,gte=0"` // Number of branches to return
+}
+
+func (p *ListBranchesParams) Validate() error {
 	return structValidator.Struct(p)
+}
+
+func (p *ListBranchesParams) ToQuery() url.Values {
+	query := url.Values{}
+	if p.Offset != 0 {
+		query.Set("offset", strconv.Itoa(p.Offset))
+	}
+	if p.Limit != 0 {
+		query.Set("limit", strconv.Itoa(p.Limit))
+	}
+	return query
+
 }
 
 // CustomValidationFunctions registers custom validation functions with the validator.
@@ -519,6 +545,15 @@ func CustomValidationFunctions(validate *validator.Validate) error {
 	versionRegex := regexp.MustCompile(`^[a-zA-Z0-9._\-+]{1,256}$`)
 	err := validate.RegisterValidation("version", func(fl validator.FieldLevel) bool {
 		return versionRegex.MatchString(fl.Field().String())
+	})
+	if err != nil {
+		return err
+	}
+
+	// Validation for BranchID: ^[a-zA-Z0-9._\-+]{1,256}$
+	branchIDRegex := regexp.MustCompile(`^[a-zA-Z0-9._\-+]{1,256}$`)
+	err = validate.RegisterValidation("branchid", func(fl validator.FieldLevel) bool {
+		return branchIDRegex.MatchString(fl.Field().String())
 	})
 	if err != nil {
 		return err
