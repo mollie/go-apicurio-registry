@@ -15,20 +15,78 @@ var structValidator *validator.Validate
 // SECTION: Params
 // ========================================
 
+type GroupOrderBy string
+
+const (
+	GroupOrderByName       GroupOrderBy = "name"
+	GroupOrderByGroupId    GroupOrderBy = "groupId"
+	GroupOrderByCreatedOn  GroupOrderBy = "createdOn"
+	GroupOrderByModifiedOn GroupOrderBy = "modifiedOn"
+)
+
+type ArtifactSortBy string
+
+const (
+	ArtifactSortByName       ArtifactSortBy = "name"
+	ArtifactSortByType       ArtifactSortBy = "artifactType"
+	ArtifactSortByCreatedOn  ArtifactSortBy = "createdOn"
+	ArtifactSortByModifiedOn ArtifactSortBy = "modifiedOn"
+	ArtifactSortByGroupID    ArtifactSortBy = "groupId"
+	ArtifactSortByArtifactID ArtifactSortBy = "artifactId"
+)
+
+type VersionSortBy string
+
+const (
+	VersionSortByVersion    VersionSortBy = "version"
+	VersionSortByGlobalID   VersionSortBy = "globalId"
+	VersionSortByCreatedOn  VersionSortBy = "createdOn"
+	VersionSortByModifiedOn VersionSortBy = "modifiedOn"
+	VersionSortByArtifactID VersionSortBy = "artifactId"
+	VersionSortByGroupID    VersionSortBy = "groupId"
+	VersionSortByName       VersionSortBy = "name"
+)
+
+type GetArtifactByGlobalIDParams struct {
+	HandleReferencesType HandleReferencesType `validate:"omitempty,oneof=PRESERVE DEREFERENCE REWRITE"`
+	ReturnArtifactType   bool                 `validate:"omitempty"`
+}
+
+func (p *GetArtifactByGlobalIDParams) Validate() error {
+	return structValidator.Struct(p)
+}
+
+func (p *GetArtifactByGlobalIDParams) ToQuery() url.Values {
+	query := url.Values{}
+	if p.HandleReferencesType != "" {
+		query.Set("references", string(p.HandleReferencesType))
+	}
+	if p.ReturnArtifactType {
+		query.Set("returnType", "true")
+	}
+	return query
+
+}
+
 // SearchArtifactsParams represents the optional parameters for searching artifacts.
 type SearchArtifactsParams struct {
-	Name         string       // Filter by artifact name
-	Offset       int          // Default: 0
-	Limit        int          // Default: 20
-	Order        Order        // Default: "asc", Enum: "asc", "desc"
-	OrderBy      OrderBy      // Field to sort by, e.g., "name", "createdOn"
-	Labels       []string     // Filter by one or more name/value labels
-	Description  string       // Filter by description
-	GroupID      string       // Filter by artifact group
-	GlobalID     int64        // Filter by globalId
-	ContentID    int64        // Filter by contentId
-	ArtifactID   string       // Filter by artifactId
-	ArtifactType ArtifactType // Filter by artifact type (e.g., AVRO, JSON)
+	Name         string         // Filter by artifact name
+	Offset       int            `validate:"omitempty,gte=0"`                // Default: 0
+	Limit        int            `validate:"omitempty,gte=0"`                // Default: 20
+	Order        Order          `validate:"omitempty,oneof=asc desc"`       // Default: "asc", Enum: "asc", "desc"
+	OrderBy      ArtifactSortBy `validate:"omitempty,oneof=name createdOn"` // Field to sort by, e.g., "name", "createdOn"
+	Labels       []string       // Filter by one or more name/value labels
+	Description  string         // Filter by description
+	GroupID      string         `validate:"omitempty,groupid"` // Filter by artifact group
+	GlobalID     int64          // Filter by globalId
+	ContentID    int64          // Filter by contentId
+	ArtifactID   string         `validate:"omitempty,artifactid"`   // Filter by artifactId
+	ArtifactType ArtifactType   `validate:"omitempty,artifacttype"` // Filter by artifact type (e.g., AVRO, JSON)
+}
+
+// Validate validates the SearchArtifactsParams struct.
+func (p *SearchArtifactsParams) Validate() error {
+	return structValidator.Struct(p)
 }
 
 // ToQuery converts the SearchArtifactsParams struct to URL query parameters.
@@ -77,13 +135,18 @@ func (p *SearchArtifactsParams) ToQuery() url.Values {
 
 // SearchArtifactsByContentParams represents the query parameters for the search by content API.
 type SearchArtifactsByContentParams struct {
-	Canonical    bool    // Canonicalize the content
-	ArtifactType string  // Artifact type (e.g., AVRO, JSON)
-	GroupID      string  // Filter by group ID
-	Offset       int     // Number of artifacts to skip
-	Limit        int     // Number of artifacts to return
-	Order        Order   // Sort order (asc, desc)
-	OrderBy      OrderBy // Field to sort by
+	Canonical    bool           // Canonicalize the content
+	ArtifactType string         `validate:"omitempty,artifacttype"`         // Artifact type (e.g., AVRO, JSON)
+	GroupID      string         `validate:"omitempty,groupid"`              // Filter by group ID
+	Offset       int            `validate:"omitempty,gte=0"`                // Number of artifacts to skip
+	Limit        int            `validate:"omitempty,gte=0"`                // Number of artifacts to return
+	Order        Order          `validate:"omitempty,oneof=asc desc"`       // Sort order (asc, desc)
+	OrderBy      ArtifactSortBy `validate:"omitempty,oneof=name createdOn"` // Field to sort by
+}
+
+// Validate validates the SearchArtifactsByContentParams struct.
+func (p *SearchArtifactsByContentParams) Validate() error {
+	return structValidator.Struct(p)
 }
 
 // ToQuery converts the SearchArtifactsByContentParams struct to query parameters.
@@ -117,9 +180,14 @@ func (p *SearchArtifactsByContentParams) ToQuery() url.Values {
 
 // CreateArtifactParams represents the parameters for creating an artifact.
 type CreateArtifactParams struct {
-	IfExists  IfExistsType // IfExists behavior @See IfExistsType
+	IfExists  IfExistsType `validate:"oneof=FAIL CREATE_VERSION FIND_OR_CREATE_VERSION"` // IfExists behavior @See IfExistsType
 	Canonical bool         // Indicates whether to canonicalize the artifact content.
 	DryRun    bool         // If true, no changes are made, only checks are performed.
+}
+
+// Validate validates the CreateArtifactParams struct.
+func (p *CreateArtifactParams) Validate() error {
+	return structValidator.Struct(p)
 }
 
 // ToQuery converts the parameters into a query string.
@@ -139,7 +207,12 @@ func (p *CreateArtifactParams) ToQuery() url.Values {
 
 // ListArtifactReferencesByGlobalIDParams represents the optional parameters for listing references by global ID.
 type ListArtifactReferencesByGlobalIDParams struct {
-	RefType RefType
+	RefType RefType `validate:"omitempty,oneof=INBOUND OUTBOUND"`
+}
+
+// Validate validates the ListArtifactReferencesByGlobalIDParams struct.
+func (p *ListArtifactReferencesByGlobalIDParams) Validate() error {
+	return structValidator.Struct(p)
 }
 
 // ToQuery converts the params struct to URL query parameters.
@@ -153,10 +226,15 @@ func (p *ListArtifactReferencesByGlobalIDParams) ToQuery() url.Values {
 
 // ListArtifactsInGroupParams represents the query parameters for listing artifacts in a group.
 type ListArtifactsInGroupParams struct {
-	Limit   int    // Number of artifacts to return (default: 20)
-	Offset  int    // Number of artifacts to skip (default: 0)
-	Order   string // Enum: "asc", "desc"
-	OrderBy string // Enum: "groupId", "artifactId", "createdOn", "modifiedOn", "artifactType", "name"
+	Offset  int            `validate:"omitempty,gte=0"`                // Number of artifacts to skip
+	Limit   int            `validate:"omitempty,gte=0"`                // Number of artifacts to return
+	Order   Order          `validate:"omitempty,oneof=asc desc"`       // Sort order (asc, desc)
+	OrderBy ArtifactSortBy `validate:"omitempty,oneof=name createdOn"` // Field to sort by
+}
+
+// Validate validates the ListArtifactsInGroupParams struct.
+func (p *ListArtifactsInGroupParams) Validate() error {
+	return structValidator.Struct(p)
 }
 
 // ToQuery converts the ListArtifactsInGroupParams struct to query parameters.
@@ -169,10 +247,10 @@ func (p *ListArtifactsInGroupParams) ToQuery() url.Values {
 		query.Set("offset", strconv.Itoa(p.Offset))
 	}
 	if p.Order != "" {
-		query.Set("order", p.Order)
+		query.Set("order", string(p.Order))
 	}
 	if p.OrderBy != "" {
-		query.Set("orderby", p.OrderBy)
+		query.Set("orderby", string(p.OrderBy))
 	}
 	return query
 }
@@ -330,15 +408,6 @@ func (p *SearchVersionByContentParams) ToQuery() url.Values {
 	return query
 }
 
-type GroupOrderBy string
-
-const (
-	GroupOrderByName       GroupOrderBy = "name"
-	GroupOrderByGroupId    GroupOrderBy = "groupId"
-	GroupOrderByCreatedOn  GroupOrderBy = "createdOn"
-	GroupOrderByModifiedOn GroupOrderBy = "modifiedOn"
-)
-
 // ListGroupsParams represents the query parameters for listing groups.
 type ListGroupsParams struct {
 	Limit   int          `validate:"omitempty,gte=0"` // Number of artifacts to return (default: 20)
@@ -414,18 +483,6 @@ func (p *SearchGroupsParams) ToQuery() url.Values {
 	return query
 }
 
-type VersionSortBy string
-
-const (
-	VersionSortByVersion    VersionSortBy = "version"
-	VersionSortByGlobalID   VersionSortBy = "globalId"
-	VersionSortByCreatedOn  VersionSortBy = "createdOn"
-	VersionSortByModifiedOn VersionSortBy = "modifiedOn"
-	VersionSortByArtifactID VersionSortBy = "artifactId"
-	VersionSortByGroupID    VersionSortBy = "groupId"
-	VersionSortByName       VersionSortBy = "name"
-)
-
 // ListArtifactsVersionsParams represents the query parameters for listing artifacts in a group.
 type ListArtifactsVersionsParams struct {
 	Limit   int           `validate:"omitempty,gte=0"`                        // Number of artifacts to return (default: 20)
@@ -456,8 +513,8 @@ func (p *ListArtifactsVersionsParams) Validate() error {
 	return structValidator.Struct(p)
 }
 
-// CustomValidationFuncs registers custom validation rules.
-func CustomValidationFuncs(validate *validator.Validate) error {
+// CustomValidationFunctions registers custom validation functions with the validator.
+func CustomValidationFunctions(validate *validator.Validate) error {
 	// Validation for Version: ^[a-zA-Z0-9._\-+]{1,256}$
 	versionRegex := regexp.MustCompile(`^[a-zA-Z0-9._\-+]{1,256}$`)
 	err := validate.RegisterValidation("version", func(fl validator.FieldLevel) bool {
@@ -513,7 +570,7 @@ func CustomValidationFuncs(validate *validator.Validate) error {
 
 func init() {
 	structValidator = validator.New()
-	if err := CustomValidationFuncs(structValidator); err != nil {
+	if err := CustomValidationFunctions(structValidator); err != nil {
 		panic(err)
 	}
 }

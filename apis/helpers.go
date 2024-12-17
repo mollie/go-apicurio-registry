@@ -23,7 +23,7 @@ var (
 // ErrInvalidInput is returned when an input validation fails.
 func validateInput(input string, regex *regexp.Regexp, name string) error {
 	if match := regex.MatchString(input); !match {
-		return errors.Wrapf(ErrInvalidInput, "%s: %s", name, input)
+		return errors.Wrapf(ErrInvalidInput, "%s='%s'", name, input)
 	}
 	return nil
 }

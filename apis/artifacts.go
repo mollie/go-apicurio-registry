@@ -8,7 +8,6 @@ import (
 	"github.com/mollie/go-apicurio-registry/client"
 	"github.com/mollie/go-apicurio-registry/models"
 	"github.com/pkg/errors"
-	"io"
 	"net/http"
 )
 
@@ -28,12 +27,55 @@ var (
 	ErrInvalidInput     = errors.New("input must be between 1 and 512 characters")
 )
 
+// GetArtifactByGlobalID Gets the content for an artifact version in the registry using its globally unique identifier.
+// See https://schema-registry.dev.mollielabs.net/apis/registry/v3#operation/getContentByGlobalId
+func (api *ArtifactsAPI) GetArtifactByGlobalID(ctx context.Context, globalID int64, params *models.GetArtifactByGlobalIDParams) (*models.ArtifactContent, error) {
+	returnArtifactType := false
+	query := ""
+	if params != nil {
+		if err := params.Validate(); err != nil {
+			return nil, errors.Wrap(err, "invalid parameters provided")
+		}
+		returnArtifactType = params.ReturnArtifactType
+		query = "?" + params.ToQuery().Encode()
+	}
+
+	url := fmt.Sprintf("%s/ids/globalIds/%d%s", api.Client.BaseURL, globalID, query)
+	resp, err := api.executeRequest(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	content, err := handleRawResponse(resp, http.StatusOK)
+	if err != nil {
+		return nil, err
+	}
+
+	var artifactType models.ArtifactType
+	if returnArtifactType {
+		// Parse artifact type header
+		aType, err := parseArtifactTypeHeader(resp)
+		if err != nil {
+			return nil, err
+		}
+		artifactType = aType
+	}
+
+	return &models.ArtifactContent{
+		Content:      content,
+		ArtifactType: artifactType,
+	}, nil
+}
+
 // SearchArtifacts - Search for artifacts using the given filter parameters.
 // Search for artifacts using the given filter parameters.
-// See:
+// See https://schema-registry.dev.mollielabs.net/apis/registry/v3#operation/searchArtifacts
 func (api *ArtifactsAPI) SearchArtifacts(ctx context.Context, params *models.SearchArtifactsParams) (*[]models.SearchedArtifact, error) {
 	query := ""
 	if params != nil {
+		if err := params.Validate(); err != nil {
+			return nil, errors.Wrap(err, "invalid parameters provided")
+		}
 		query = "?" + params.ToQuery().Encode()
 	}
 
@@ -53,11 +95,14 @@ func (api *ArtifactsAPI) SearchArtifacts(ctx context.Context, params *models.Sea
 
 // SearchArtifactsByContent searches for artifacts that match the provided content.
 // Returns a paginated list of all artifacts with at least one version that matches the posted content.
-// See: https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifacts/operation/searchArtifactsByContent
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifacts/operation/searchArtifactsByContent
 func (api *ArtifactsAPI) SearchArtifactsByContent(ctx context.Context, content []byte, params *models.SearchArtifactsByContentParams) (*[]models.SearchedArtifact, error) {
 	// Convert params to query string
 	query := ""
 	if params != nil {
+		if err := params.Validate(); err != nil {
+			return nil, errors.Wrap(err, "invalid parameters provided")
+		}
 		query = "?" + params.ToQuery().Encode()
 	}
 
@@ -76,7 +121,7 @@ func (api *ArtifactsAPI) SearchArtifactsByContent(ctx context.Context, content [
 }
 
 // ListArtifactReferences Returns a list containing all the artifact references using the artifact content ID.
-// See: https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifacts/operation/referencesByContentId
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifacts/operation/referencesByContentId
 func (api *ArtifactsAPI) ListArtifactReferences(ctx context.Context, contentID int64) (*[]models.ArtifactReference, error) {
 	url := fmt.Sprintf("%s/ids/contentId/%d/references", api.Client.BaseURL, contentID)
 	resp, err := api.executeRequest(ctx, http.MethodGet, url, nil)
@@ -93,10 +138,13 @@ func (api *ArtifactsAPI) ListArtifactReferences(ctx context.Context, contentID i
 }
 
 // ListArtifactReferencesByGlobalID Returns a list containing all the artifact references using the artifact global ID.
-// See: https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifacts/operation/referencesByContentHash
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifacts/operation/referencesByContentHash
 func (api *ArtifactsAPI) ListArtifactReferencesByGlobalID(ctx context.Context, globalID int64, params *models.ListArtifactReferencesByGlobalIDParams) (*[]models.ArtifactReference, error) {
 	query := ""
 	if params != nil {
+		if err := params.Validate(); err != nil {
+			return nil, errors.Wrap(err, "invalid parameters provided")
+		}
 		query = "?" + params.ToQuery().Encode()
 	}
 
@@ -115,7 +163,7 @@ func (api *ArtifactsAPI) ListArtifactReferencesByGlobalID(ctx context.Context, g
 }
 
 // ListArtifactReferencesByHash Returns a list containing all the artifact references using the artifact content hash.
-// See: https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifacts/operation/referencesByContentHash
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifacts/operation/referencesByContentHash
 func (api *ArtifactsAPI) ListArtifactReferencesByHash(ctx context.Context, contentHash string) (*[]models.ArtifactReference, error) {
 	url := fmt.Sprintf("%s/ids/contentHashes/%s/references", api.Client.BaseURL, contentHash)
 	resp, err := api.executeRequest(ctx, http.MethodGet, url, nil)
@@ -132,7 +180,7 @@ func (api *ArtifactsAPI) ListArtifactReferencesByHash(ctx context.Context, conte
 }
 
 // ListArtifactsInGroup lists all artifacts in a specified group.
-// See: https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifacts/operation/referencesByContentHash
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifacts/operation/referencesByContentHash
 func (api *ArtifactsAPI) ListArtifactsInGroup(ctx context.Context, groupID string, params *models.ListArtifactsInGroupParams) (*models.ListArtifactsResponse, error) {
 	if err := validateInput(groupID, regexGroupIDArtifactID, "Group ID"); err != nil {
 		return nil, err
@@ -140,6 +188,9 @@ func (api *ArtifactsAPI) ListArtifactsInGroup(ctx context.Context, groupID strin
 
 	query := ""
 	if params != nil {
+		if err := params.Validate(); err != nil {
+			return nil, errors.Wrap(err, "invalid parameters provided")
+		}
 		query = "?" + params.ToQuery().Encode()
 	}
 
@@ -159,7 +210,7 @@ func (api *ArtifactsAPI) ListArtifactsInGroup(ctx context.Context, groupID strin
 
 // GetArtifactContentByHash Gets the content for an artifact version in the registry using the SHA-256 hash of the content
 // This content hash may be shared by multiple artifact versions in the case where the artifact versions have identical content.
-// See: https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifacts/operation/getContentByHash
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifacts/operation/getContentByHash
 func (api *ArtifactsAPI) GetArtifactContentByHash(ctx context.Context, contentHash string) (*models.ArtifactContent, error) {
 	url := fmt.Sprintf("%s/ids/contentHashes/%s", api.Client.BaseURL, contentHash)
 	resp, err := api.executeRequest(ctx, http.MethodGet, url, nil)
@@ -167,28 +218,15 @@ func (api *ArtifactsAPI) GetArtifactContentByHash(ctx context.Context, contentHa
 		return nil, err
 	}
 
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, errors.Wrapf(ErrArtifactNotFound, "content hash: %s", contentHash)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		apiError, parseErr := parseAPIError(resp)
-		if parseErr != nil {
-			return nil, errors.Wrap(parseErr, "unexpected error")
-		}
-		return nil, apiError
+	content, err := handleRawResponse(resp, http.StatusOK)
+	if err != nil {
+		return nil, err
 	}
 
 	// Parse artifact type header
 	artifactType, err := parseArtifactTypeHeader(resp)
 	if err != nil {
 		return nil, err
-	}
-
-	// Parse the response body
-	content, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to read response body")
 	}
 
 	return &models.ArtifactContent{
@@ -199,7 +237,7 @@ func (api *ArtifactsAPI) GetArtifactContentByHash(ctx context.Context, contentHa
 
 // GetArtifactContentByID Gets the content for an artifact version in the registry using the unique content identifier for that content
 // This content ID may be shared by multiple artifact versions in the case where the artifact versions are identical.
-// See: https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifacts/operation/getContentById
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifacts/operation/getContentById
 func (api *ArtifactsAPI) GetArtifactContentByID(ctx context.Context, contentID int64) (*models.ArtifactContent, error) {
 	url := fmt.Sprintf("%s/ids/contentIds/%d", api.Client.BaseURL, contentID)
 	resp, err := api.executeRequest(ctx, http.MethodGet, url, nil)
@@ -207,28 +245,15 @@ func (api *ArtifactsAPI) GetArtifactContentByID(ctx context.Context, contentID i
 		return nil, err
 	}
 
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, errors.Wrapf(ErrArtifactNotFound, "content ID: %d", contentID)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		apiError, parseErr := parseAPIError(resp)
-		if parseErr != nil {
-			return nil, errors.Wrap(parseErr, "unexpected error")
-		}
-		return nil, apiError
+	content, err := handleRawResponse(resp, http.StatusOK)
+	if err != nil {
+		return nil, err
 	}
 
 	// Parse artifact type header
 	artifactType, err := parseArtifactTypeHeader(resp)
 	if err != nil {
 		return nil, err
-	}
-
-	// Parse the response body
-	content, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to read response body")
 	}
 
 	return &models.ArtifactContent{
@@ -239,7 +264,7 @@ func (api *ArtifactsAPI) GetArtifactContentByID(ctx context.Context, contentID i
 
 // DeleteArtifactsInGroup deletes all artifacts in a given group.
 // Deletes all the artifacts that exist in a given group.
-// See: https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifacts/operation/deleteArtifactsInGroup
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifacts/operation/deleteArtifactsInGroup
 func (api *ArtifactsAPI) DeleteArtifactsInGroup(ctx context.Context, groupID string) error {
 	if err := validateInput(groupID, regexGroupIDArtifactID, "Group ID"); err != nil {
 		return err
@@ -256,7 +281,7 @@ func (api *ArtifactsAPI) DeleteArtifactsInGroup(ctx context.Context, groupID str
 
 // DeleteArtifact deletes a specific artifact identified by groupId and artifactId.
 // Deletes an artifact completely, resulting in all versions of the artifact also being deleted. This may fail for one of the following reasons:
-// See: https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifacts/operation/deleteArtifact
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifacts/operation/deleteArtifact
 func (api *ArtifactsAPI) DeleteArtifact(ctx context.Context, groupID, artifactId string) error {
 	if err := validateInput(groupID, regexGroupIDArtifactID, "Group ID"); err != nil {
 		return err
@@ -270,16 +295,12 @@ func (api *ArtifactsAPI) DeleteArtifact(ctx context.Context, groupID, artifactId
 	if err != nil {
 		return err
 	}
-
-	if resp.StatusCode == http.StatusMethodNotAllowed {
-		return ErrMethodNotAllowed
-	}
-
+	
 	return handleResponse(resp, http.StatusNoContent, nil)
 }
 
 // CreateArtifact Creates a new artifact.
-// See: https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifacts/operation/createArtifact
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifacts/operation/createArtifact
 func (api *ArtifactsAPI) CreateArtifact(ctx context.Context, groupId string, artifact models.CreateArtifactRequest, params *models.CreateArtifactParams) (*models.ArtifactDetail, error) {
 	if err := validateInput(groupId, regexGroupIDArtifactID, "Group ID"); err != nil {
 		return nil, err
@@ -287,6 +308,9 @@ func (api *ArtifactsAPI) CreateArtifact(ctx context.Context, groupId string, art
 
 	query := ""
 	if params != nil {
+		if err := params.Validate(); err != nil {
+			return nil, errors.Wrap(err, "invalid parameters provided")
+		}
 		query = "?" + params.ToQuery().Encode()
 	}
 	url := fmt.Sprintf("%s/groups/%s/artifacts%s", api.Client.BaseURL, groupId, query)
@@ -305,7 +329,7 @@ func (api *ArtifactsAPI) CreateArtifact(ctx context.Context, groupId string, art
 }
 
 // ListArtifactRules lists all artifact rules for a given artifact.
-// See: https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifact-rules/operation/createArtifactRule
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifact-rules/operation/createArtifactRule
 func (api *ArtifactsAPI) ListArtifactRules(ctx context.Context, groupID, artifactId string) ([]models.Rule, error) {
 	url := fmt.Sprintf("%s/groups/%s/artifacts/%s/rules", api.Client.BaseURL, groupID, artifactId)
 	resp, err := api.executeRequest(ctx, http.MethodGet, url, nil)
@@ -322,12 +346,12 @@ func (api *ArtifactsAPI) ListArtifactRules(ctx context.Context, groupID, artifac
 }
 
 // CreateArtifactRule creates a new artifact rule for a given artifact.
-// See: https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifact-rules/operation/createArtifactRule
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifact-rules/operation/createArtifactRule
 func (api *ArtifactsAPI) CreateArtifactRule(ctx context.Context, groupID, artifactId string, rule models.Rule, level models.RuleLevel) error {
 	url := fmt.Sprintf("%s/groups/%s/artifacts/%s/rules", api.Client.BaseURL, groupID, artifactId)
 
 	// Prepare the request body
-	body := models.CreateUpdateGlobalRuleRequest{
+	body := models.CreateUpdateRuleRequest{
 		RuleType: rule,
 		Config:   level,
 	}
@@ -340,7 +364,7 @@ func (api *ArtifactsAPI) CreateArtifactRule(ctx context.Context, groupID, artifa
 }
 
 // DeleteAllArtifactRule deletes all artifact rules for a given artifact.
-// See: https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifact-rules/operation/deleteArtifactRules
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifact-rules/operation/deleteArtifactRules
 func (api *ArtifactsAPI) DeleteAllArtifactRule(ctx context.Context, groupID, artifactId string) error {
 	url := fmt.Sprintf("%s/groups/%s/artifacts/%s/rules", api.Client.BaseURL, groupID, artifactId)
 	resp, err := api.executeRequest(ctx, http.MethodDelete, url, nil)
@@ -352,7 +376,7 @@ func (api *ArtifactsAPI) DeleteAllArtifactRule(ctx context.Context, groupID, art
 }
 
 // GetArtifactRule gets the rule level for a given artifact rule.
-// See: https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifact-rules/operation/getArtifactRuleConfig
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifact-rules/operation/getArtifactRuleConfig
 func (api *ArtifactsAPI) GetArtifactRule(ctx context.Context, groupID, artifactId string, rule models.Rule) (models.RuleLevel, error) {
 	url := fmt.Sprintf("%s/groups/%s/artifacts/%s/rules/%s", api.Client.BaseURL, groupID, artifactId, rule)
 	resp, err := api.executeRequest(ctx, http.MethodGet, url, nil)
@@ -360,7 +384,7 @@ func (api *ArtifactsAPI) GetArtifactRule(ctx context.Context, groupID, artifactI
 		return "", err
 	}
 
-	var globalRule models.GlobalRuleResponse
+	var globalRule models.RuleResponse
 	if err := handleResponse(resp, http.StatusOK, &globalRule); err != nil {
 		return "", err
 	}
@@ -369,12 +393,12 @@ func (api *ArtifactsAPI) GetArtifactRule(ctx context.Context, groupID, artifactI
 }
 
 // UpdateArtifactRule updates the rule level for a given artifact rule.
-// See: https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifact-rules/operation/updateArtifactRuleConfig
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifact-rules/operation/updateArtifactRuleConfig
 func (api *ArtifactsAPI) UpdateArtifactRule(ctx context.Context, groupID, artifactId string, rule models.Rule, level models.RuleLevel) error {
 	url := fmt.Sprintf("%s/groups/%s/artifacts/%s/rules/%s", api.Client.BaseURL, groupID, artifactId, rule)
 
 	// Prepare the request body
-	body := models.CreateUpdateGlobalRuleRequest{
+	body := models.CreateUpdateRuleRequest{
 		RuleType: rule,
 		Config:   level,
 	}
@@ -383,7 +407,7 @@ func (api *ArtifactsAPI) UpdateArtifactRule(ctx context.Context, groupID, artifa
 		return err
 	}
 
-	var globalRule models.GlobalRuleResponse
+	var globalRule models.RuleResponse
 	if err := handleResponse(resp, http.StatusOK, &globalRule); err != nil {
 		return err
 	}
@@ -392,7 +416,7 @@ func (api *ArtifactsAPI) UpdateArtifactRule(ctx context.Context, groupID, artifa
 }
 
 // DeleteArtifactRule deletes a specific artifact rule for a given artifact.
-// See: https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifact-rules/operation/deleteArtifactRule
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifact-rules/operation/deleteArtifactRule
 func (api *ArtifactsAPI) DeleteArtifactRule(ctx context.Context, groupID, artifactId string, rule models.Rule) error {
 	url := fmt.Sprintf("%s/groups/%s/artifacts/%s/rules/%s", api.Client.BaseURL, groupID, artifactId, rule)
 	resp, err := api.executeRequest(ctx, http.MethodDelete, url, nil)

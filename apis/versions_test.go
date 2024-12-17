@@ -1925,34 +1925,3 @@ func TestVersionsAPIIntegration(t *testing.T) {
 		assert.NoError(t, err)
 	})
 }
-
-func generateArtifactForTest(ctx context.Context, artifactsAPI *apis.ArtifactsAPI) (string, error) {
-	// Helper to generate unique artifact IDs
-	generateArtifactID := func(prefix string) string {
-		return fmt.Sprintf("%s-%d", prefix, time.Now().UnixNano())
-	}
-
-	newArtifactID := generateArtifactID("test-artifact")
-
-	artifact := models.CreateArtifactRequest{
-		ArtifactID:   newArtifactID,
-		ArtifactType: models.Json,
-		Name:         newArtifactID,
-		FirstVersion: models.CreateVersionRequest{
-			Version: "1.0.0",
-			Content: models.CreateContentRequest{
-				Content:     stubArtifactContent,
-				ContentType: "application/json",
-			},
-			IsDraft: true,
-		},
-	}
-	createParams := &models.CreateArtifactParams{
-		IfExists: models.IfExistsFail,
-	}
-	_, err := artifactsAPI.CreateArtifact(ctx, groupID, artifact, createParams)
-	if err != nil {
-		return "", err
-	}
-	return newArtifactID, nil
-}

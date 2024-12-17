@@ -5,9 +5,14 @@ services:
     image: apicurio/apicurio-registry:3.0.5
     ports:
       - "9080:8080"
+      - "8080:8080"
     environment:
       LOG_LEVEL: DEBUG
       QUARKUS_HTTP_CORS_ORIGINS: '*' # Allow CORS from all origins
+      QUARKUS_OIDC_TENANT_ENABLED: "false"
+      QUARKUS_OIDC_AUTH_SERVER_URL : "https://trial-2902165.okta.com"
+      APICURIO_UI_AUTH_OIDC_CLIENT_ID: "0oamjivtaeE6mt1Ey697"
+      APICURIO_UI_AUTH_OIDC_REDIRECT_URI: "http://localhost:9090"
       APICURIO_REST_MUTABILITY_ARTIFACT_VERSION_CONTENT_ENABLED: "true"
       APICURIO_REST_DELETION_ARTIFACT_ENABLED: "true"
       APICURIO_REST_DELETION_ARTIFACT_VERSION_ENABLED: "true"

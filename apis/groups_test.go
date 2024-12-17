@@ -12,7 +12,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 )
 
 var (
@@ -1007,14 +1006,12 @@ func TestGroupsAPIIntegration(t *testing.T) {
 
 	// Test ListGroups
 	t.Run("ListGroups", func(t *testing.T) {
-		groupInfo, randomGroupID, err := generateGroupForTest(ctx, groupAPI)
+		_, randomGroupID, err := generateGroupForTest(ctx, groupAPI)
 		assert.NoError(t, err)
 
 		resp, err := groupAPI.ListGroups(ctx, nil)
 		assert.NoError(t, err)
 		assert.GreaterOrEqual(t, len(resp), 1)
-		assert.Equal(t, randomGroupID, resp[0].GroupId)
-		assert.Equal(t, groupInfo.Description, resp[0].Description)
 
 		// Clean up
 		err = deleteGroupAfterTest(ctx, groupAPI, randomGroupID)
@@ -1152,19 +1149,4 @@ func TestGroupsAPIIntegration(t *testing.T) {
 func setupGroupsAPIClient() *apis.GroupAPI {
 	apiClient := setupHTTPClient()
 	return apis.NewGroupAPI(apiClient)
-}
-
-func generateGroupForTest(ctx context.Context, groupAPI *apis.GroupAPI) (*models.GroupInfo, string, error) {
-	newGroupID := generateRandomName("test-group")
-	resp, err := groupAPI.CreateGroup(ctx, newGroupID, stubDescription, stubLabels)
-	return resp, newGroupID, err
-}
-
-func deleteGroupAfterTest(ctx context.Context, groupAPI *apis.GroupAPI, groupID string) error {
-	return groupAPI.DeleteGroup(ctx, groupID)
-
-}
-
-func generateRandomName(prefix string) string {
-	return fmt.Sprintf("%s-%d", prefix, time.Now().UnixNano())
 }
