@@ -26,6 +26,9 @@ var (
 	stubArtifactContent = `{"type": "record", "name": "Test", "fields": [{"name": "field1", "type": "string"}]}`
 	stubArtifactId      = "test-artifact"
 	stubGroupId         = "test-group"
+	stubBranchID        = "test-branch"
+	stubVersionID       = "1.0.0"
+	stubVersionID2      = "2.0.0"
 )
 
 func setupHTTPClient() *client.Client {

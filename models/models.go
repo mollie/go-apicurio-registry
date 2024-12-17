@@ -99,9 +99,9 @@ type ArtifactVersion struct {
 // ArtifactVersionDetailed represents a single version of an artifact with additional information.
 type ArtifactVersionDetailed struct {
 	ArtifactVersion                   // Embedding ArtifactVersion
-	Name            string            `json:"name,omitempty"` // Name of the artifact version
+	Name            string            `json:"name,omitempty"`        // Name of the artifact version
 	Description     string            `json:"description,omitempty"` // Description of the artifact version
-	Labels          map[string]string `json:"labels,omitempty"` // User-defined name-value pairs
+	Labels          map[string]string `json:"labels,omitempty"`      // User-defined name-value pairs
 }
 
 type UserInfo struct {
@@ -121,4 +121,16 @@ type GroupInfo struct {
 	ModifiedBy  string            `json:"modifiedBy"`
 	ModifiedOn  string            `json:"modifiedOn"`
 	Labels      map[string]string `json:"labels"`
+}
+
+type BranchInfo struct {
+	GroupId       string `json:"groupId"`
+	ArtifactId    string `json:"artifactId"`
+	BranchId      string `json:"branchId"`
+	Description   string `json:"description"`
+	SystemDefined bool   `json:"systemDefined"`
+	CreatedOn     string `json:"createdOn"`
+	Owner         string `json:"owner"`
+	ModifiedOn    string `json:"modifiedOn"`
+	ModifiedBy    string `json:"modifiedBy"`
 }

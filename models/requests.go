@@ -59,3 +59,16 @@ type UpdateGroupRequest struct {
 	Description string            `json:"description"`
 	Labels      map[string]string `json:"labels"`
 }
+
+type CreateBranchRequest struct {
+	BranchID    string `json:"branch_id" validate:"required,branchid"`
+	Description string `json:"description,omitempty"`
+}
+
+func (r *CreateBranchRequest) Validate() error {
+	return structValidator.Struct(r)
+}
+
+type UpdateBranchMetaDataRequest struct {
+	Description string `json:"description,omitempty"`
+}

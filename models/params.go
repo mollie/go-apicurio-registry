@@ -513,12 +513,42 @@ func (p *ListArtifactsVersionsParams) Validate() error {
 	return structValidator.Struct(p)
 }
 
+type ListBranchesParams struct {
+	Offset int `validate:"omitempty,gte=0"` // Number of branches to skip
+	Limit  int `validate:"omitempty,gte=0"` // Number of branches to return
+}
+
+func (p *ListBranchesParams) Validate() error {
+	return structValidator.Struct(p)
+}
+
+func (p *ListBranchesParams) ToQuery() url.Values {
+	query := url.Values{}
+	if p.Offset != 0 {
+		query.Set("offset", strconv.Itoa(p.Offset))
+	}
+	if p.Limit != 0 {
+		query.Set("limit", strconv.Itoa(p.Limit))
+	}
+	return query
+
+}
+
 // CustomValidationFunctions registers custom validation functions with the validator.
 func CustomValidationFunctions(validate *validator.Validate) error {
 	// Validation for Version: ^[a-zA-Z0-9._\-+]{1,256}$
 	versionRegex := regexp.MustCompile(`^[a-zA-Z0-9._\-+]{1,256}$`)
 	err := validate.RegisterValidation("version", func(fl validator.FieldLevel) bool {
 		return versionRegex.MatchString(fl.Field().String())
+	})
+	if err != nil {
+		return err
+	}
+
+	// Validation for BranchID: ^[a-zA-Z0-9._\-+]{1,256}$
+	branchIDRegex := regexp.MustCompile(`^[a-zA-Z0-9._\-+]{1,256}$`)
+	err = validate.RegisterValidation("branchid", func(fl validator.FieldLevel) bool {
+		return branchIDRegex.MatchString(fl.Field().String())
 	})
 	if err != nil {
 		return err

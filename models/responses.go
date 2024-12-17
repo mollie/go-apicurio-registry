@@ -98,11 +98,19 @@ type SystemUIConfigResponse struct {
 	Features FeatureFlags `json:"features"`
 }
 
+// GroupInfoResponse represents the response from the get group API.
 type GroupInfoResponse struct {
 	Groups []GroupInfo `json:"groups"`
 	Count  int         `json:"count"`
 }
 
+// ArtifactTypeResponse represents the response from the get artifact type API.
 type ArtifactTypeResponse struct {
 	Name ArtifactType `json:"name"`
+}
+
+// BranchesInfoResponse represents the response from the get branch API.
+type BranchesInfoResponse struct {
+	Branches []BranchInfo `json:"branches"`
+	Count    int          `json:"count"`
 }

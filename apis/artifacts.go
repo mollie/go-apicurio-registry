@@ -21,14 +21,8 @@ func NewArtifactsAPI(client *client.Client) *ArtifactsAPI {
 	}
 }
 
-var (
-	ErrArtifactNotFound = errors.New("artifact not found")
-	ErrMethodNotAllowed = errors.New("method not allowed or disabled on the server")
-	ErrInvalidInput     = errors.New("input must be between 1 and 512 characters")
-)
-
 // GetArtifactByGlobalID Gets the content for an artifact version in the registry using its globally unique identifier.
-// See https://schema-registry.dev.mollielabs.net/apis/registry/v3#operation/getContentByGlobalId
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifacts/operation/getContentByGlobalId
 func (api *ArtifactsAPI) GetArtifactByGlobalID(ctx context.Context, globalID int64, params *models.GetArtifactByGlobalIDParams) (*models.ArtifactContent, error) {
 	returnArtifactType := false
 	query := ""
@@ -69,7 +63,7 @@ func (api *ArtifactsAPI) GetArtifactByGlobalID(ctx context.Context, globalID int
 
 // SearchArtifacts - Search for artifacts using the given filter parameters.
 // Search for artifacts using the given filter parameters.
-// See https://schema-registry.dev.mollielabs.net/apis/registry/v3#operation/searchArtifacts
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifacts/operation/searchArtifacts
 func (api *ArtifactsAPI) SearchArtifacts(ctx context.Context, params *models.SearchArtifactsParams) (*[]models.SearchedArtifact, error) {
 	query := ""
 	if params != nil {
@@ -295,7 +289,7 @@ func (api *ArtifactsAPI) DeleteArtifact(ctx context.Context, groupID, artifactId
 	if err != nil {
 		return err
 	}
-	
+
 	return handleResponse(resp, http.StatusNoContent, nil)
 }
 

@@ -19,8 +19,6 @@ var (
 	stubUpdatedDescription = "updated-description"
 	stubLabels             = map[string]string{"key": "value"}
 	stubUpdatedLabels      = map[string]string{"key1": "value1"}
-	stubGroupID            = "test-group"
-	stubArtifactID         = "test-artifact"
 )
 
 func TestGroupAPI_ListGroups(t *testing.T) {
