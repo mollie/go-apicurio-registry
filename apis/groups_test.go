@@ -2,36 +2,21 @@ package apis_test
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/mollie/go-apicurio-registry/apis"
 	"github.com/mollie/go-apicurio-registry/client"
 	"github.com/mollie/go-apicurio-registry/models"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"net/http"
-	"net/http/httptest"
 	"testing"
-)
-
-var (
-	stubDescription        = "description"
-	stubUpdatedDescription = "updated-description"
-	stubLabels             = map[string]string{"key": "value"}
-	stubUpdatedLabels      = map[string]string{"key1": "value1"}
 )
 
 func TestGroupAPI_ListGroups(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockGroups := []models.GroupInfo{{GroupId: "group1"}, {GroupId: "group2"}}
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, "/groups")
-			assert.Equal(t, http.MethodGet, r.Method)
+		mockResponse := models.GroupInfoResponse{Groups: mockGroups}
 
-			w.WriteHeader(http.StatusOK)
-			err := json.NewEncoder(w).Encode(models.GroupInfoResponse{Groups: mockGroups})
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusOK, mockResponse, "/groups", http.MethodGet)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -44,14 +29,9 @@ func TestGroupAPI_ListGroups(t *testing.T) {
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, "/groups")
-			assert.Equal(t, http.MethodGet, r.Method)
+		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
 
-			w.WriteHeader(http.StatusInternalServerError)
-			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError})
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusInternalServerError, errorResponse, "/groups", http.MethodGet)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -60,26 +40,15 @@ func TestGroupAPI_ListGroups(t *testing.T) {
 		result, err := groupAPI.ListGroups(context.Background(), nil)
 		assert.Error(t, err)
 		assert.Nil(t, result)
-
-		var apiErr *models.APIError
-		ok := errors.As(err, &apiErr)
-		assert.True(t, ok)
-		assert.Equal(t, http.StatusInternalServerError, apiErr.Status)
-		assert.Equal(t, TitleInternalServerError, apiErr.Title)
+		assertAPIError(t, err, http.StatusInternalServerError, TitleInternalServerError)
 	})
 }
 
 func TestGroupAPI_CreateGroup(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockGroup := models.GroupInfo{GroupId: "group1"}
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, "/groups")
-			assert.Equal(t, http.MethodPost, r.Method)
 
-			w.WriteHeader(http.StatusOK)
-			err := json.NewEncoder(w).Encode(mockGroup)
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusOK, mockGroup, "/groups", http.MethodPost)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -102,14 +71,9 @@ func TestGroupAPI_CreateGroup(t *testing.T) {
 	})
 
 	t.Run("Conflict", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, "/groups")
-			assert.Equal(t, http.MethodPost, r.Method)
+		errorResponse := models.APIError{Status: http.StatusConflict, Title: TitleConflict}
 
-			w.WriteHeader(http.StatusConflict)
-			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusConflict, Title: TitleConflict})
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusConflict, errorResponse, "/groups", http.MethodPost)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -118,23 +82,13 @@ func TestGroupAPI_CreateGroup(t *testing.T) {
 		result, err := groupAPI.CreateGroup(context.Background(), "group1", "description", nil)
 		assert.Error(t, err)
 		assert.Nil(t, result)
-
-		var apiErr *models.APIError
-		ok := errors.As(err, &apiErr)
-		assert.True(t, ok)
-		assert.Equal(t, http.StatusConflict, apiErr.Status)
-		assert.Equal(t, TitleConflict, apiErr.Title)
+		assertAPIError(t, err, http.StatusConflict, TitleConflict)
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, "/groups")
-			assert.Equal(t, http.MethodPost, r.Method)
+		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
 
-			w.WriteHeader(http.StatusInternalServerError)
-			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError})
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusInternalServerError, errorResponse, "/groups", http.MethodPost)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -143,26 +97,15 @@ func TestGroupAPI_CreateGroup(t *testing.T) {
 		result, err := groupAPI.CreateGroup(context.Background(), "group1", "description", nil)
 		assert.Error(t, err)
 		assert.Nil(t, result)
-
-		var apiErr *models.APIError
-		ok := errors.As(err, &apiErr)
-		assert.True(t, ok)
-		assert.Equal(t, http.StatusInternalServerError, apiErr.Status)
-		assert.Equal(t, TitleInternalServerError, apiErr.Title)
+		assertAPIError(t, err, http.StatusInternalServerError, TitleInternalServerError)
 	})
 }
 
 func TestGroupAPI_GetGroupById(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockGroup := models.GroupInfo{GroupId: "group1"}
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, "/groups/group1")
-			assert.Equal(t, http.MethodGet, r.Method)
 
-			w.WriteHeader(http.StatusOK)
-			err := json.NewEncoder(w).Encode(mockGroup)
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusOK, mockGroup, "/groups/group1", http.MethodGet)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -185,14 +128,9 @@ func TestGroupAPI_GetGroupById(t *testing.T) {
 	})
 
 	t.Run("NotFound", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, "/groups/group1")
-			assert.Equal(t, http.MethodGet, r.Method)
+		errorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
 
-			w.WriteHeader(http.StatusNotFound)
-			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusNotFound, Title: TitleNotFound})
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusNotFound, errorResponse, "/groups/group1", http.MethodGet)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -201,23 +139,13 @@ func TestGroupAPI_GetGroupById(t *testing.T) {
 		result, err := groupAPI.GetGroupById(context.Background(), "group1")
 		assert.Error(t, err)
 		assert.Nil(t, result)
-
-		var apiErr *models.APIError
-		ok := errors.As(err, &apiErr)
-		assert.True(t, ok)
-		assert.Equal(t, http.StatusNotFound, apiErr.Status)
-		assert.Equal(t, TitleNotFound, apiErr.Title)
+		assertAPIError(t, err, http.StatusNotFound, TitleNotFound)
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, "/groups/group1")
-			assert.Equal(t, http.MethodGet, r.Method)
+		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
 
-			w.WriteHeader(http.StatusInternalServerError)
-			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError})
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusInternalServerError, errorResponse, "/groups/group1", http.MethodGet)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -226,23 +154,14 @@ func TestGroupAPI_GetGroupById(t *testing.T) {
 		result, err := groupAPI.GetGroupById(context.Background(), "group1")
 		assert.Error(t, err)
 		assert.Nil(t, result)
-
-		var apiErr *models.APIError
-		ok := errors.As(err, &apiErr)
-		assert.True(t, ok)
-		assert.Equal(t, http.StatusInternalServerError, apiErr.Status)
-		assert.Equal(t, TitleInternalServerError, apiErr.Title)
+		assertAPIError(t, err, http.StatusInternalServerError, TitleInternalServerError)
 	})
 }
 
 func TestGroupAPI_UpdateGroupMetadata(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, "/groups/group1")
-			assert.Equal(t, http.MethodPut, r.Method)
-
-			w.WriteHeader(http.StatusNoContent)
-		}))
+		server := setupMockServer(t, http.StatusNoContent, nil,
+			"/groups/group1", http.MethodPut)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -262,14 +181,10 @@ func TestGroupAPI_UpdateGroupMetadata(t *testing.T) {
 	})
 
 	t.Run("NotFound", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, "/groups/group1")
-			assert.Equal(t, http.MethodPut, r.Method)
+		errorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
 
-			w.WriteHeader(http.StatusNotFound)
-			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusNotFound, Title: TitleNotFound})
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusNotFound, errorResponse,
+			"/groups/group1", http.MethodPut)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -277,23 +192,14 @@ func TestGroupAPI_UpdateGroupMetadata(t *testing.T) {
 
 		err := groupAPI.UpdateGroupMetadata(context.Background(), "group1", "description", nil)
 		assert.Error(t, err)
-
-		var apiErr *models.APIError
-		ok := errors.As(err, &apiErr)
-		assert.True(t, ok)
-		assert.Equal(t, http.StatusNotFound, apiErr.Status)
-		assert.Equal(t, TitleNotFound, apiErr.Title)
+		assertAPIError(t, err, http.StatusNotFound, TitleNotFound)
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, "/groups/group1")
-			assert.Equal(t, http.MethodPut, r.Method)
+		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
 
-			w.WriteHeader(http.StatusInternalServerError)
-			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError})
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusInternalServerError, errorResponse,
+			"/groups/group1", http.MethodPut)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -301,23 +207,14 @@ func TestGroupAPI_UpdateGroupMetadata(t *testing.T) {
 
 		err := groupAPI.UpdateGroupMetadata(context.Background(), "group1", "description", nil)
 		assert.Error(t, err)
-
-		var apiErr *models.APIError
-		ok := errors.As(err, &apiErr)
-		assert.True(t, ok)
-		assert.Equal(t, http.StatusInternalServerError, apiErr.Status)
-		assert.Equal(t, TitleInternalServerError, apiErr.Title)
+		assertAPIError(t, err, http.StatusInternalServerError, TitleInternalServerError)
 	})
 }
 
 func TestGroupAPI_DeleteGroup(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, "/groups/group1")
-			assert.Equal(t, http.MethodDelete, r.Method)
-
-			w.WriteHeader(http.StatusNoContent)
-		}))
+		server := setupMockServer(t, http.StatusNoContent, nil,
+			"/groups/group1", http.MethodDelete)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -337,14 +234,10 @@ func TestGroupAPI_DeleteGroup(t *testing.T) {
 	})
 
 	t.Run("NotFound", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, "/groups/group1")
-			assert.Equal(t, http.MethodDelete, r.Method)
+		errorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
 
-			w.WriteHeader(http.StatusNotFound)
-			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusNotFound, Title: TitleNotFound})
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusNotFound, errorResponse,
+			"/groups/group1", http.MethodDelete)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -352,23 +245,14 @@ func TestGroupAPI_DeleteGroup(t *testing.T) {
 
 		err := groupAPI.DeleteGroup(context.Background(), "group1")
 		assert.Error(t, err)
-
-		var apiErr *models.APIError
-		ok := errors.As(err, &apiErr)
-		assert.True(t, ok)
-		assert.Equal(t, http.StatusNotFound, apiErr.Status)
-		assert.Equal(t, TitleNotFound, apiErr.Title)
+		assertAPIError(t, err, http.StatusNotFound, TitleNotFound)
 	})
 
 	t.Run("Not Allowed", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, "/groups/group1")
-			assert.Equal(t, http.MethodDelete, r.Method)
+		errorResponse := models.APIError{Status: http.StatusMethodNotAllowed, Title: TitleMethodNotAllowed}
 
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusMethodNotAllowed, Title: TitleMethodNotAllowed})
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusMethodNotAllowed, errorResponse,
+			"/groups/group1", http.MethodDelete)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -376,23 +260,14 @@ func TestGroupAPI_DeleteGroup(t *testing.T) {
 
 		err := groupAPI.DeleteGroup(context.Background(), "group1")
 		assert.Error(t, err)
-
-		var apiErr *models.APIError
-		ok := errors.As(err, &apiErr)
-		assert.True(t, ok)
-		assert.Equal(t, http.StatusMethodNotAllowed, apiErr.Status)
-		assert.Equal(t, TitleMethodNotAllowed, apiErr.Title)
+		assertAPIError(t, err, http.StatusMethodNotAllowed, TitleMethodNotAllowed)
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, "/groups/group1")
-			assert.Equal(t, http.MethodDelete, r.Method)
+		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
 
-			w.WriteHeader(http.StatusInternalServerError)
-			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError})
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusInternalServerError, errorResponse,
+			"/groups/group1", http.MethodDelete)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -400,26 +275,16 @@ func TestGroupAPI_DeleteGroup(t *testing.T) {
 
 		err := groupAPI.DeleteGroup(context.Background(), "group1")
 		assert.Error(t, err)
-
-		var apiErr *models.APIError
-		ok := errors.As(err, &apiErr)
-		assert.True(t, ok)
-		assert.Equal(t, http.StatusInternalServerError, apiErr.Status)
-		assert.Equal(t, TitleInternalServerError, apiErr.Title)
+		assertAPIError(t, err, http.StatusInternalServerError, TitleInternalServerError)
 	})
 }
 
 func TestGroupAPI_SearchGroups(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockGroups := []models.GroupInfo{{GroupId: "group1"}, {GroupId: "group2"}}
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, "/search/groups")
-			assert.Equal(t, http.MethodGet, r.Method)
+		mockResponse := models.GroupInfoResponse{Groups: mockGroups}
 
-			w.WriteHeader(http.StatusOK)
-			err := json.NewEncoder(w).Encode(models.GroupInfoResponse{Groups: mockGroups})
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusOK, mockResponse, "/search/groups", http.MethodGet)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -432,14 +297,9 @@ func TestGroupAPI_SearchGroups(t *testing.T) {
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, "/search/groups")
-			assert.Equal(t, http.MethodGet, r.Method)
+		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
 
-			w.WriteHeader(http.StatusInternalServerError)
-			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError})
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusInternalServerError, errorResponse, "/search/groups", http.MethodGet)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -448,26 +308,16 @@ func TestGroupAPI_SearchGroups(t *testing.T) {
 		result, err := groupAPI.SearchGroups(context.Background(), nil)
 		assert.Error(t, err)
 		assert.Nil(t, result)
-
-		var apiErr *models.APIError
-		ok := errors.As(err, &apiErr)
-		assert.True(t, ok)
-		assert.Equal(t, http.StatusInternalServerError, apiErr.Status)
-		assert.Equal(t, TitleInternalServerError, apiErr.Title)
+		assertAPIError(t, err, http.StatusInternalServerError, TitleInternalServerError)
 	})
 }
 
 func TestGroupsAPI_ListGroupRules(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockReferences := []models.Rule{models.RuleValidity, models.RuleCompatibility}
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, fmt.Sprintf("/groups/%s/rules", stubGroupId))
-			assert.Equal(t, http.MethodGet, r.Method)
 
-			w.WriteHeader(http.StatusOK)
-			err := json.NewEncoder(w).Encode(mockReferences)
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusOK, mockReferences,
+			fmt.Sprintf("/groups/%s/rules", stubGroupId), http.MethodGet)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -490,11 +340,10 @@ func TestGroupsAPI_ListGroupRules(t *testing.T) {
 	})
 
 	t.Run("Not Found", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusNotFound)
-			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusNotFound, Title: TitleNotFound})
-			assert.NoError(t, err)
-		}))
+		errorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
+
+		server := setupMockServer(t, http.StatusNotFound, errorResponse,
+			fmt.Sprintf("/groups/%s/rules", stubGroupId), http.MethodGet)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -503,20 +352,14 @@ func TestGroupsAPI_ListGroupRules(t *testing.T) {
 		result, err := api.ListGroupRules(context.Background(), stubGroupId)
 		assert.Error(t, err)
 		assert.Nil(t, result)
-
-		var apiErr *models.APIError
-		ok := errors.As(err, &apiErr)
-		assert.True(t, ok)
-		assert.Equal(t, http.StatusNotFound, apiErr.Status)
-		assert.Equal(t, TitleNotFound, apiErr.Title)
+		assertAPIError(t, err, http.StatusNotFound, TitleNotFound)
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusInternalServerError)
-			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError})
-			assert.NoError(t, err)
-		}))
+		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
+
+		server := setupMockServer(t, http.StatusInternalServerError, errorResponse,
+			fmt.Sprintf("/groups/%s/rules", stubGroupId), http.MethodGet)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -525,23 +368,14 @@ func TestGroupsAPI_ListGroupRules(t *testing.T) {
 		result, err := api.ListGroupRules(context.Background(), stubGroupId)
 		assert.Error(t, err)
 		assert.Nil(t, result)
-
-		var apiErr *models.APIError
-		ok := errors.As(err, &apiErr)
-		assert.True(t, ok)
-		assert.Equal(t, http.StatusInternalServerError, apiErr.Status)
-		assert.Equal(t, TitleInternalServerError, apiErr.Title)
+		assertAPIError(t, err, http.StatusInternalServerError, TitleInternalServerError)
 	})
 }
 
 func TestGroupsAPI_CreateGroupRule(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, fmt.Sprintf("/groups/%s/rules", stubGroupId))
-			assert.Equal(t, http.MethodPost, r.Method)
-
-			w.WriteHeader(http.StatusNoContent)
-		}))
+		server := setupMockServer(t, http.StatusNoContent, nil,
+			fmt.Sprintf("/groups/%s/rules", stubGroupId), http.MethodPost)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -561,114 +395,75 @@ func TestGroupsAPI_CreateGroupRule(t *testing.T) {
 	})
 
 	t.Run("BadRequest", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, fmt.Sprintf("/groups/%s/rules", stubGroupId))
-			assert.Equal(t, http.MethodPost, r.Method)
+		errorResponse := models.APIError{Status: http.StatusBadRequest, Title: TitleBadRequest}
 
-			w.WriteHeader(http.StatusBadRequest)
-			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusBadRequest, Title: TitleBadRequest})
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusBadRequest, errorResponse,
+			fmt.Sprintf("/groups/%s/rules", stubGroupId), http.MethodPost)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewGroupAPI(mockClient)
+
 		err := api.CreateGroupRule(context.Background(), stubGroupId, models.RuleValidity, models.ValidityLevelFull)
-
 		assert.Error(t, err)
-
-		var apiErr *models.APIError
-		ok := errors.As(err, &apiErr)
-		assert.True(t, ok)
-		assert.Equal(t, http.StatusBadRequest, apiErr.Status)
-		assert.Equal(t, TitleBadRequest, apiErr.Title)
+		assertAPIError(t, err, http.StatusBadRequest, TitleBadRequest)
 	})
 
 	t.Run("Conflict", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, fmt.Sprintf("/groups/%s/rules", stubGroupId))
-			assert.Equal(t, http.MethodPost, r.Method)
+		errorResponse := models.APIError{Status: http.StatusConflict, Title: TitleConflict}
 
-			w.WriteHeader(http.StatusInternalServerError)
-			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusConflict, Title: TitleConflict})
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusConflict, errorResponse,
+			fmt.Sprintf("/groups/%s/rules", stubGroupId), http.MethodPost)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewGroupAPI(mockClient)
+
 		err := api.CreateGroupRule(context.Background(), stubGroupId, models.RuleValidity, models.ValidityLevelFull)
-
 		assert.Error(t, err)
-
-		var apiErr *models.APIError
-		ok := errors.As(err, &apiErr)
-		assert.True(t, ok)
-		assert.Equal(t, http.StatusConflict, apiErr.Status)
-		assert.Equal(t, TitleConflict, apiErr.Title)
+		assertAPIError(t, err, http.StatusConflict, TitleConflict)
 	})
 
 	t.Run("NotFound", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, fmt.Sprintf("/groups/%s/rules", stubGroupId))
-			assert.Equal(t, http.MethodPost, r.Method)
+		errorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
 
-			w.WriteHeader(http.StatusNotFound)
-			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusNotFound, Title: TitleNotFound})
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusNotFound, errorResponse,
+			fmt.Sprintf("/groups/%s/rules", stubGroupId), http.MethodPost)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewGroupAPI(mockClient)
+
 		err := api.CreateGroupRule(context.Background(), stubGroupId, models.RuleValidity, models.ValidityLevelFull)
-
 		assert.Error(t, err)
-
-		var apiErr *models.APIError
-		ok := errors.As(err, &apiErr)
-		assert.True(t, ok)
-		assert.Equal(t, http.StatusNotFound, apiErr.Status)
-		assert.Equal(t, TitleNotFound, apiErr.Title)
+		assertAPIError(t, err, http.StatusNotFound, TitleNotFound)
 	})
 
 	t.Run("InternalServerError", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, fmt.Sprintf("/groups/%s/rules", stubGroupId))
-			assert.Equal(t, http.MethodPost, r.Method)
+		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
 
-			w.WriteHeader(http.StatusInternalServerError)
-			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError})
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusInternalServerError, errorResponse,
+			fmt.Sprintf("/groups/%s/rules", stubGroupId), http.MethodPost)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewGroupAPI(mockClient)
+
 		err := api.CreateGroupRule(context.Background(), stubGroupId, models.RuleValidity, models.ValidityLevelFull)
-
 		assert.Error(t, err)
-
-		var apiErr *models.APIError
-		ok := errors.As(err, &apiErr)
-		assert.True(t, ok)
-		assert.Equal(t, http.StatusInternalServerError, apiErr.Status)
-		assert.Equal(t, TitleInternalServerError, apiErr.Title)
+		assertAPIError(t, err, http.StatusInternalServerError, TitleInternalServerError)
 	})
 }
 
 func TestGroupsAPI_DeleteAllGroupRule(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, fmt.Sprintf("/groups/%s/rules", stubGroupId))
-			assert.Equal(t, http.MethodDelete, r.Method)
-
-			w.WriteHeader(http.StatusNoContent)
-		}))
+		server := setupMockServer(t, http.StatusNoContent, nil,
+			fmt.Sprintf("/groups/%s/rules", stubGroupId), http.MethodDelete)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewGroupAPI(mockClient)
+
 		err := api.DeleteAllGroupRule(context.Background(), stubGroupId)
 		assert.NoError(t, err)
 	})
@@ -683,49 +478,33 @@ func TestGroupsAPI_DeleteAllGroupRule(t *testing.T) {
 	})
 
 	t.Run("NotFound", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, fmt.Sprintf("/groups/%s/rules", stubGroupId))
-			assert.Equal(t, http.MethodDelete, r.Method)
+		errorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
 
-			w.WriteHeader(http.StatusNotFound)
-			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusNotFound, Title: TitleNotFound})
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusNotFound, errorResponse,
+			fmt.Sprintf("/groups/%s/rules", stubGroupId), http.MethodDelete)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewGroupAPI(mockClient)
+
 		err := api.DeleteAllGroupRule(context.Background(), stubGroupId)
 		assert.Error(t, err)
-
-		var apiErr *models.APIError
-		ok := errors.As(err, &apiErr)
-		assert.True(t, ok)
-		assert.Equal(t, http.StatusNotFound, apiErr.Status)
-		assert.Equal(t, TitleNotFound, apiErr.Title)
+		assertAPIError(t, err, http.StatusNotFound, TitleNotFound)
 	})
 
 	t.Run("InternalServerError", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, fmt.Sprintf("/groups/%s/rules", stubGroupId))
-			assert.Equal(t, http.MethodDelete, r.Method)
+		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
 
-			w.WriteHeader(http.StatusInternalServerError)
-			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError})
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusInternalServerError, errorResponse,
+			fmt.Sprintf("/groups/%s/rules", stubGroupId), http.MethodDelete)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewGroupAPI(mockClient)
+
 		err := api.DeleteAllGroupRule(context.Background(), stubGroupId)
 		assert.Error(t, err)
-
-		var apiErr *models.APIError
-		ok := errors.As(err, &apiErr)
-		assert.True(t, ok)
-		assert.Equal(t, http.StatusInternalServerError, apiErr.Status)
-		assert.Equal(t, TitleInternalServerError, apiErr.Title)
+		assertAPIError(t, err, http.StatusInternalServerError, TitleInternalServerError)
 	})
 }
 
@@ -736,18 +515,14 @@ func TestGroupsAPI_GetGroupRule(t *testing.T) {
 			Config:   models.ValidityLevelFull,
 		}
 		mockRule := models.RuleValidity
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, fmt.Sprintf("/groups/%s/rules/%s", stubGroupId, mockRule))
-			assert.Equal(t, http.MethodGet, r.Method)
 
-			w.WriteHeader(http.StatusOK)
-			err := json.NewEncoder(w).Encode(mockResponse)
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusOK, mockResponse,
+			fmt.Sprintf("/groups/%s/rules/%s", stubGroupId, mockRule), http.MethodGet)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewGroupAPI(mockClient)
+
 		result, err := api.GetGroupRule(context.Background(), stubGroupId, mockRule)
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -766,52 +541,36 @@ func TestGroupsAPI_GetGroupRule(t *testing.T) {
 
 	t.Run("NotFound", func(t *testing.T) {
 		mockRule := models.RuleValidity
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, fmt.Sprintf("/groups/%s/rules/%s", stubGroupId, mockRule))
-			assert.Equal(t, http.MethodGet, r.Method)
+		errorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
 
-			w.WriteHeader(http.StatusNotFound)
-			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusNotFound, Title: TitleNotFound})
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusNotFound, errorResponse,
+			fmt.Sprintf("/groups/%s/rules/%s", stubGroupId, mockRule), http.MethodGet)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewGroupAPI(mockClient)
+
 		result, err := api.GetGroupRule(context.Background(), stubGroupId, mockRule)
 		assert.Error(t, err)
 		assert.Empty(t, result)
-
-		var apiErr *models.APIError
-		ok := errors.As(err, &apiErr)
-		assert.True(t, ok)
-		assert.Equal(t, http.StatusNotFound, apiErr.Status)
-		assert.Equal(t, TitleNotFound, apiErr.Title)
+		assertAPIError(t, err, http.StatusNotFound, TitleNotFound)
 	})
 
 	t.Run("InternalServerError", func(t *testing.T) {
 		mockRule := models.RuleValidity
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, fmt.Sprintf("/groups/%s/rules/%s", stubGroupId, mockRule))
-			assert.Equal(t, http.MethodGet, r.Method)
+		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
 
-			w.WriteHeader(http.StatusInternalServerError)
-			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError})
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusInternalServerError, errorResponse,
+			fmt.Sprintf("/groups/%s/rules/%s", stubGroupId, mockRule), http.MethodGet)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewGroupAPI(mockClient)
+
 		result, err := api.GetGroupRule(context.Background(), stubGroupId, mockRule)
 		assert.Error(t, err)
 		assert.Empty(t, result)
-
-		var apiErr *models.APIError
-		ok := errors.As(err, &apiErr)
-		assert.True(t, ok)
-		assert.Equal(t, http.StatusInternalServerError, apiErr.Status)
-		assert.Equal(t, TitleInternalServerError, apiErr.Title)
+		assertAPIError(t, err, http.StatusInternalServerError, TitleInternalServerError)
 	})
 }
 
@@ -822,18 +581,14 @@ func TestGroupsAPI_UpdateGroupRule(t *testing.T) {
 			RuleType: mockRule,
 			Config:   models.ValidityLevelFull,
 		}
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, fmt.Sprintf("/groups/%s/rules/%s", stubGroupId, mockRule))
-			assert.Equal(t, http.MethodPut, r.Method)
 
-			w.WriteHeader(http.StatusOK)
-			err := json.NewEncoder(w).Encode(mockResponse)
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusOK, mockResponse,
+			fmt.Sprintf("/groups/%s/rules/%s", stubGroupId, mockRule), http.MethodPut)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewGroupAPI(mockClient)
+
 		err := api.UpdateGroupRule(context.Background(), stubGroupId, mockRule, models.ValidityLevelFull)
 		assert.NoError(t, err)
 	})
@@ -849,66 +604,47 @@ func TestGroupsAPI_UpdateGroupRule(t *testing.T) {
 
 	t.Run("NotFound", func(t *testing.T) {
 		mockRule := models.RuleValidity
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, fmt.Sprintf("/groups/%s/rules/%s", stubGroupId, mockRule))
-			assert.Equal(t, http.MethodPut, r.Method)
+		errorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
 
-			w.WriteHeader(http.StatusNotFound)
-			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusNotFound, Title: TitleNotFound})
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusNotFound, errorResponse,
+			fmt.Sprintf("/groups/%s/rules/%s", stubGroupId, mockRule), http.MethodPut)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewGroupAPI(mockClient)
+
 		err := api.UpdateGroupRule(context.Background(), stubGroupId, mockRule, models.ValidityLevelFull)
 		assert.Error(t, err)
-
-		var apiErr *models.APIError
-		ok := errors.As(err, &apiErr)
-		assert.True(t, ok)
-		assert.Equal(t, http.StatusNotFound, apiErr.Status)
-		assert.Equal(t, TitleNotFound, apiErr.Title)
+		assertAPIError(t, err, http.StatusNotFound, TitleNotFound)
 	})
 
 	t.Run("InternalServerError", func(t *testing.T) {
 		mockRule := models.RuleValidity
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, fmt.Sprintf("/groups/%s/rules/%s", stubGroupId, mockRule))
-			assert.Equal(t, http.MethodPut, r.Method)
+		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
 
-			w.WriteHeader(http.StatusInternalServerError)
-			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError})
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusInternalServerError, errorResponse,
+			fmt.Sprintf("/groups/%s/rules/%s", stubGroupId, mockRule), http.MethodPut)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewGroupAPI(mockClient)
+
 		err := api.UpdateGroupRule(context.Background(), stubGroupId, mockRule, models.ValidityLevelFull)
 		assert.Error(t, err)
-
-		var apiErr *models.APIError
-		ok := errors.As(err, &apiErr)
-		assert.True(t, ok)
-		assert.Equal(t, http.StatusInternalServerError, apiErr.Status)
-		assert.Equal(t, TitleInternalServerError, apiErr.Title)
+		assertAPIError(t, err, http.StatusInternalServerError, TitleInternalServerError)
 	})
 }
 
 func TestGroupsAPI_DeleteGroupRule(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockRule := models.RuleValidity
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, fmt.Sprintf("/groups/%s/rules/%s", stubGroupId, mockRule))
-			assert.Equal(t, http.MethodDelete, r.Method)
-
-			w.WriteHeader(http.StatusNoContent)
-		}))
+		server := setupMockServer(t, http.StatusNoContent, nil,
+			fmt.Sprintf("/groups/%s/rules/%s", stubGroupId, mockRule), http.MethodDelete)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewGroupAPI(mockClient)
+
 		err := api.DeleteGroupRule(context.Background(), stubGroupId, mockRule)
 		assert.NoError(t, err)
 	})
@@ -924,50 +660,34 @@ func TestGroupsAPI_DeleteGroupRule(t *testing.T) {
 
 	t.Run("NotFound", func(t *testing.T) {
 		mockRule := models.RuleValidity
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, fmt.Sprintf("/groups/%s/rules/%s", stubGroupId, mockRule))
-			assert.Equal(t, http.MethodDelete, r.Method)
+		errorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
 
-			w.WriteHeader(http.StatusNotFound)
-			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusNotFound, Title: TitleNotFound})
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusNotFound, errorResponse,
+			fmt.Sprintf("/groups/%s/rules/%s", stubGroupId, mockRule), http.MethodDelete)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewGroupAPI(mockClient)
+
 		err := api.DeleteGroupRule(context.Background(), stubGroupId, mockRule)
 		assert.Error(t, err)
-
-		var apiErr *models.APIError
-		ok := errors.As(err, &apiErr)
-		assert.True(t, ok)
-		assert.Equal(t, http.StatusNotFound, apiErr.Status)
-		assert.Equal(t, TitleNotFound, apiErr.Title)
+		assertAPIError(t, err, http.StatusNotFound, TitleNotFound)
 	})
 
 	t.Run("InternalServerError", func(t *testing.T) {
 		mockRule := models.RuleValidity
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, fmt.Sprintf("/groups/%s/rules/%s", stubGroupId, mockRule))
-			assert.Equal(t, http.MethodDelete, r.Method)
+		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
 
-			w.WriteHeader(http.StatusInternalServerError)
-			err := json.NewEncoder(w).Encode(models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError})
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusInternalServerError, errorResponse,
+			fmt.Sprintf("/groups/%s/rules/%s", stubGroupId, mockRule), http.MethodDelete)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewGroupAPI(mockClient)
+
 		err := api.DeleteGroupRule(context.Background(), stubGroupId, mockRule)
 		assert.Error(t, err)
-
-		var apiErr *models.APIError
-		ok := errors.As(err, &apiErr)
-		assert.True(t, ok)
-		assert.Equal(t, http.StatusInternalServerError, apiErr.Status)
-		assert.Equal(t, TitleInternalServerError, apiErr.Title)
+		assertAPIError(t, err, http.StatusInternalServerError, TitleInternalServerError)
 	})
 }
 

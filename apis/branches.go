@@ -113,15 +113,15 @@ func (api *BranchAPI) GetBranchMetaData(ctx context.Context, groupId, artifactId
 
 // UpdateBranchMetaData Update branch metaData
 // See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Branches/operation/updateBranchMetaData
-func (api *BranchAPI) UpdateBranchMetaData(ctx context.Context, groupId, artifactId, branchId, description string) (*models.BranchInfo, error) {
+func (api *BranchAPI) UpdateBranchMetaData(ctx context.Context, groupId, artifactId, branchId, description string) error {
 	if err := validateInput(artifactId, regexGroupIDArtifactID, "Artifact ID"); err != nil {
-		return nil, err
+		return err
 	}
 	if err := validateInput(groupId, regexGroupIDArtifactID, "Group ID"); err != nil {
-		return nil, err
+		return err
 	}
 	if err := validateInput(branchId, regexBranchID, "Branch ID"); err != nil {
-		return nil, err
+		return err
 	}
 
 	url := fmt.Sprintf("%s/groups/%s/artifacts/%s/branches/%s", api.Client.BaseURL, groupId, artifactId, branchId)
@@ -131,15 +131,14 @@ func (api *BranchAPI) UpdateBranchMetaData(ctx context.Context, groupId, artifac
 	}
 	resp, err := api.executeRequest(ctx, http.MethodPut, url, branchMetaData)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	var result models.BranchInfo
-	if err := handleResponse(resp, http.StatusOK, &result); err != nil {
-		return nil, err
+	if err := handleResponse(resp, http.StatusNoContent, nil); err != nil {
+		return err
 	}
 
-	return &result, nil
+	return nil
 
 }
 

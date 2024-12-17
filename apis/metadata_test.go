@@ -93,11 +93,8 @@ func TestGetArtifactVersionMetadata(t *testing.T) {
 
 func TestUpdateArtifactVersionMetadata(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Equal(t, http.MethodPut, r.Method)
-			assert.Contains(t, r.URL.Path, "/groups/test-group/artifacts/artifact-1")
-			w.WriteHeader(http.StatusNoContent)
-		}))
+		server := setupMockServer(t, http.StatusNoContent, nil,
+			"/groups/test-group/artifacts/artifact-1/versions/1.0.0", http.MethodPut)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -169,14 +166,8 @@ func TestGetArtifactMetadata(t *testing.T) {
 			ModifiedOn: "2024-12-09",
 		}
 
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, r.URL.Path, "/groups/test-group/artifacts/artifact-1")
-			assert.Equal(t, http.MethodGet, r.Method)
-
-			w.WriteHeader(http.StatusOK)
-			err := json.NewEncoder(w).Encode(mockMetadata)
-			assert.NoError(t, err)
-		}))
+		server := setupMockServer(t, http.StatusOK, mockMetadata,
+			"/groups/test-group/artifacts/artifact-1", http.MethodGet)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -189,9 +180,8 @@ func TestGetArtifactMetadata(t *testing.T) {
 		assert.Equal(t, "user-1", result.ModifiedBy)
 	})
 
-	t.Run("Invalid Inputs", func(t *testing.T) {
+	t.Run("Validation: Invalid Inputs", func(t *testing.T) {
 		ctx := context.Background()
-
 		mockClient := &client.Client{BaseURL: "http://example.com", HTTPClient: http.DefaultClient}
 		api := apis.NewMetadataAPI(mockClient)
 
@@ -212,9 +202,9 @@ func TestGetArtifactMetadata(t *testing.T) {
 	})
 
 	t.Run("Artifact Not Found", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusNotFound)
-		}))
+		server := setupMockServer(t, http.StatusNotFound,
+			models.APIError{Status: http.StatusNotFound, Title: TitleNotFound},
+			"/groups/test-group/artifacts/artifact-1", http.MethodGet)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -223,16 +213,14 @@ func TestGetArtifactMetadata(t *testing.T) {
 		result, err := api.GetArtifactMetadata(context.Background(), "test-group", "artifact-1")
 		assert.Error(t, err)
 		assert.Nil(t, result)
+		assertAPIError(t, err, http.StatusNotFound, TitleNotFound)
 	})
 }
 
 func TestUpdateArtifactMetadata(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Equal(t, http.MethodPut, r.Method)
-			assert.Contains(t, r.URL.Path, "/groups/test-group/artifacts/artifact-1")
-			w.WriteHeader(http.StatusNoContent)
-		}))
+		server := setupMockServer(t, http.StatusNoContent, nil,
+			"/groups/test-group/artifacts/artifact-1", http.MethodPut)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -314,30 +302,31 @@ func TestMetadataAPIIntegration(t *testing.T) {
 
 	artifact := models.CreateArtifactRequest{
 		ArtifactType: models.Json,
-		ArtifactID:   artifactID,
-		Name:         artifactID,
+		ArtifactID:   stubArtifactId,
+		Name:         stubArtifactId,
 		FirstVersion: models.CreateVersionRequest{
 			Version: versionExpression,
 			Content: models.CreateContentRequest{
-				Content: stubArtifactContent,
+				Content:     stubArtifactContent,
+				ContentType: "application/json",
 			},
 		},
 	}
 	createParams := &models.CreateArtifactParams{
 		IfExists: models.IfExistsFail,
 	}
-	_, err := artifactsAPI.CreateArtifact(ctx, groupID, artifact, createParams)
+	_, err := artifactsAPI.CreateArtifact(ctx, stubGroupId, artifact, createParams)
 	if err != nil {
 		t.Fatalf("Failed to create artifact: %v", err)
 	}
 
 	// Test GetArtifactVersionMetadata
 	t.Run("GetArtifactVersionMetadata", func(t *testing.T) {
-		result, err := metadataAPI.GetArtifactVersionMetadata(ctx, groupID, artifactID, versionExpression)
+		result, err := metadataAPI.GetArtifactVersionMetadata(ctx, stubGroupId, stubArtifactId, versionExpression)
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		fmt.Println(result)
-		assert.Equal(t, artifactID, result.ArtifactID)
+		assert.Equal(t, stubArtifactId, result.ArtifactID)
 		assert.Equal(t, versionExpression, result.Version)
 	})
 
@@ -348,11 +337,11 @@ func TestMetadataAPIIntegration(t *testing.T) {
 			Description: "Updated Artifact Version Description",
 		}
 
-		err := metadataAPI.UpdateArtifactVersionMetadata(ctx, groupID, artifactID, versionExpression, updateRequest)
+		err := metadataAPI.UpdateArtifactVersionMetadata(ctx, stubGroupId, stubArtifactId, versionExpression, updateRequest)
 		assert.NoError(t, err)
 
 		// Verify the update
-		updatedMetadata, err := metadataAPI.GetArtifactVersionMetadata(ctx, groupID, artifactID, versionExpression)
+		updatedMetadata, err := metadataAPI.GetArtifactVersionMetadata(ctx, stubGroupId, stubArtifactId, versionExpression)
 		assert.NoError(t, err)
 		assert.Equal(t, "Updated Artifact Version Name", updatedMetadata.Name)
 		assert.Equal(t, "Updated Artifact Version Description", updatedMetadata.Description)
@@ -360,10 +349,10 @@ func TestMetadataAPIIntegration(t *testing.T) {
 
 	// Test GetArtifactMetadata
 	t.Run("GetArtifactMetadata", func(t *testing.T) {
-		result, err := metadataAPI.GetArtifactMetadata(ctx, groupID, artifactID)
+		result, err := metadataAPI.GetArtifactMetadata(ctx, stubGroupId, stubArtifactId)
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
-		assert.Equal(t, artifactID, result.ArtifactID)
+		assert.Equal(t, stubArtifactId, result.ArtifactID)
 	})
 
 	// Test UpdateArtifactMetadata
@@ -376,11 +365,11 @@ func TestMetadataAPIIntegration(t *testing.T) {
 			},
 		}
 
-		err := metadataAPI.UpdateArtifactMetadata(ctx, groupID, artifactID, updateRequest)
+		err := metadataAPI.UpdateArtifactMetadata(ctx, stubGroupId, stubArtifactId, updateRequest)
 		assert.NoError(t, err)
 
 		// Verify the update
-		updatedMetadata, err := metadataAPI.GetArtifactMetadata(ctx, groupID, artifactID)
+		updatedMetadata, err := metadataAPI.GetArtifactMetadata(ctx, stubGroupId, stubArtifactId)
 		assert.NoError(t, err)
 		assert.Equal(t, "Updated Artifact Name", updatedMetadata.Name)
 		assert.Equal(t, "Updated Artifact Description", updatedMetadata.Description)

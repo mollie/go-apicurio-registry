@@ -24,6 +24,7 @@ func NewVersionsAPI(client *client.Client) *VersionsAPI {
 // DeleteArtifactVersion deletes a single version of the artifact.
 // Parameters `groupId`, `artifactId`, and the unique `versionExpression` are needed.
 // This feature must be enabled using the `registry.rest.artifact.deletion.enabled` property.
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Versions/operation/deleteArtifactVersion
 func (api *VersionsAPI) DeleteArtifactVersion(
 	ctx context.Context,
 	groupID, artifactID, versionExpression string,
@@ -54,11 +55,14 @@ func (api *VersionsAPI) DeleteArtifactVersion(
 	return handleResponse(resp, http.StatusNoContent, nil)
 }
 
-// GetArtifactVersionReferences retrieves all references for a single artifact version.
+// GetArtifactVersionReferences Retrieves all references for a single version of an artifact.
+// Both the artifactId and the unique version number must be provided.
+// Using the refType query parameter, it is possible to retrieve an array of either the inbound or outbound references.
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Versions/operation/getArtifactVersionReferences
 func (api *VersionsAPI) GetArtifactVersionReferences(ctx context.Context,
 	groupId, artifactId, versionExpression string,
 	params *models.ArtifactVersionReferencesParams,
-) (*[]models.ArtifactReference, error) {
+) ([]models.ArtifactReference, error) {
 	// Validate inputs
 	if err := validateInput(groupId, regexGroupIDArtifactID, "Group ID"); err != nil {
 		return nil, err
@@ -72,6 +76,9 @@ func (api *VersionsAPI) GetArtifactVersionReferences(ctx context.Context,
 
 	query := ""
 	if params != nil {
+		if err := params.Validate(); err != nil {
+			return nil, errors.Wrap(err, "invalid parameters provided")
+		}
 		query = "?" + params.ToQuery().Encode()
 	}
 
@@ -96,10 +103,12 @@ func (api *VersionsAPI) GetArtifactVersionReferences(ctx context.Context,
 		return nil, err
 	}
 
-	return &references, nil
+	return references, nil
 }
 
-// GetArtifactVersionComments retrieves all comments for a version of an artifact.
+// GetArtifactVersionComments Retrieves all comments for a version of an artifact.
+// Both the artifactId and the unique version number must be provided.
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Versions/operation/getArtifactVersionComments
 func (api *VersionsAPI) GetArtifactVersionComments(
 	ctx context.Context,
 	groupId, artifactId, versionExpression string,
@@ -133,7 +142,9 @@ func (api *VersionsAPI) GetArtifactVersionComments(
 	return &comments, nil
 }
 
-// AddArtifactVersionComment adds a new comment to a specific artifact version.
+// AddArtifactVersionComment Adds a new comment to the artifact version.
+// Both the artifactId and the unique version number must be provided.
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Versions/operation/addArtifactVersionComment
 func (api *VersionsAPI) AddArtifactVersionComment(
 	ctx context.Context,
 	groupId, artifactId, versionExpression string,
@@ -179,7 +190,10 @@ func (api *VersionsAPI) AddArtifactVersionComment(
 	return &comment, nil
 }
 
-// UpdateArtifactVersionComment updates the value of a single comment in an artifact version.
+// UpdateArtifactVersionComment Updates the value of a single comment in an artifact version.
+// Only the owner of the comment can modify it.
+// The artifactId, unique version number, and commentId must be provided.
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Versions/operation/updateArtifactVersionComment
 func (api *VersionsAPI) UpdateArtifactVersionComment(
 	ctx context.Context,
 	groupId, artifactId, versionExpression, commentId string,
@@ -223,7 +237,10 @@ func (api *VersionsAPI) UpdateArtifactVersionComment(
 	return nil
 }
 
-// DeleteArtifactVersionComment deletes a single comment from an artifact version.
+// DeleteArtifactVersionComment Deletes a single comment in an artifact version.
+// Only the owner of the comment can delete it.
+// The artifactId, unique version number, and commentId must be provided.
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Versions/operation/deleteArtifactVersionComment
 func (api *VersionsAPI) DeleteArtifactVersionComment(
 	ctx context.Context,
 	groupId, artifactId, versionExpression, commentId string,
@@ -236,6 +253,10 @@ func (api *VersionsAPI) DeleteArtifactVersionComment(
 	}
 	if err := validateInput(versionExpression, regexVersion, "Version Expression"); err != nil {
 		return err
+	}
+
+	if commentId == "" {
+		return errors.New("Comment ID cannot be empty")
 	}
 
 	url := fmt.Sprintf(
@@ -256,12 +277,14 @@ func (api *VersionsAPI) DeleteArtifactVersionComment(
 
 }
 
-// ListArtifactVersions retrieves all versions of an artifact.
+// ListArtifactVersions Returns a list of all versions of the artifact.
+// The result set is paged.
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Versions/operation/listArtifactVersions
 func (api *VersionsAPI) ListArtifactVersions(
 	ctx context.Context,
 	groupId, artifactId string,
 	params *models.ListArtifactsVersionsParams,
-) (*[]models.ArtifactVersion, error) {
+) ([]models.ArtifactVersion, error) {
 	if err := validateInput(groupId, regexGroupIDArtifactID, "Group ID"); err != nil {
 		return nil, err
 	}
@@ -288,11 +311,14 @@ func (api *VersionsAPI) ListArtifactVersions(
 		return nil, err
 	}
 
-	return &versionsResponse.Versions, nil
+	return versionsResponse.Versions, nil
 
 }
 
-// CreateArtifactVersion creates a new version of the artifact.
+// CreateArtifactVersion Creates a new version of the artifact by uploading new content.
+// The configured rules for the artifact are applied, and if they all pass, the new content is added as the most recent version of the artifact.
+// If any of the rules fail, an error is returned.
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Versions/operation/createArtifactVersion
 func (api *VersionsAPI) CreateArtifactVersion(
 	ctx context.Context,
 	groupId, artifactId string,
@@ -325,7 +351,11 @@ func (api *VersionsAPI) CreateArtifactVersion(
 
 }
 
-// GetArtifactVersionContent retrieves a single version of the artifact.
+// GetArtifactVersionContent Retrieves a single version of the artifact content.
+// Both the artifactId and the unique version number must be provided.
+// The Content-Type of the response depends on the artifact type.
+// In most cases, this is application/json, but for some types it may be different (for example, PROTOBUF).
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Versions/operation/getArtifactVersionContent
 func (api *VersionsAPI) GetArtifactVersionContent(
 	ctx context.Context,
 	groupId, artifactId, versionExpression string,
@@ -365,7 +395,8 @@ func (api *VersionsAPI) GetArtifactVersionContent(
 	}, nil
 }
 
-// UpdateArtifactVersionContent updates the content of a single version of the artifact.
+// UpdateArtifactVersionContent Updates the content of a single version of an artifact.
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Versions/operation/updateArtifactVersionContent
 func (api *VersionsAPI) UpdateArtifactVersionContent(
 	ctx context.Context,
 	groupId, artifactId, versionExpression string,
@@ -381,6 +412,10 @@ func (api *VersionsAPI) UpdateArtifactVersionContent(
 		return err
 	}
 
+	if err := content.Validate(); err != nil {
+		return errors.Wrap(err, "invalid content provided")
+	}
+
 	url := fmt.Sprintf("%s/groups/%s/artifacts/%s/versions/%s/content", api.Client.BaseURL, groupId, artifactId, versionExpression)
 
 	resp, err := api.executeRequest(ctx, http.MethodPut, url, content)
@@ -391,11 +426,12 @@ func (api *VersionsAPI) UpdateArtifactVersionContent(
 	return handleResponse(resp, http.StatusNoContent, nil)
 }
 
-// SearchForArtifactVersions searches for versions of an artifact.
+// SearchForArtifactVersions Returns a paginated list of all versions that match the provided filter criteria.
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Versions/operation/searchVersions
 func (api *VersionsAPI) SearchForArtifactVersions(
 	ctx context.Context,
 	params *models.SearchVersionParams,
-) (*[]models.ArtifactVersion, error) {
+) ([]models.ArtifactVersion, error) {
 
 	query := ""
 	if params != nil {
@@ -417,15 +453,16 @@ func (api *VersionsAPI) SearchForArtifactVersions(
 		return nil, err
 	}
 
-	return &searchVersionsResponse.Versions, nil
+	return searchVersionsResponse.Versions, nil
 }
 
-// SearchForArtifactVersionByContent searches for a version of an artifact by content.
+// SearchForArtifactVersionByContent Returns a paginated list of all versions that match the posted content.
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Versions/operation/searchVersionsByContent
 func (api *VersionsAPI) SearchForArtifactVersionByContent(
 	ctx context.Context,
 	content string,
 	params *models.SearchVersionByContentParams,
-) (*[]models.ArtifactVersion, error) {
+) ([]models.ArtifactVersion, error) {
 	query := ""
 	if params != nil {
 		if err := params.Validate(); err != nil {
@@ -446,10 +483,11 @@ func (api *VersionsAPI) SearchForArtifactVersionByContent(
 		return nil, err
 	}
 
-	return &searchVersionsResponse.Versions, nil
+	return searchVersionsResponse.Versions, nil
 }
 
-// GetArtifactVersionState retrieves the current state of an artifact version.
+// GetArtifactVersionState Gets the current state of an artifact version.
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Versions/operation/getArtifactVersionState
 func (api *VersionsAPI) GetArtifactVersionState(
 	ctx context.Context,
 	groupId, artifactId, versionExpression string,
@@ -483,7 +521,14 @@ func (api *VersionsAPI) GetArtifactVersionState(
 	return &stateResponse.State, nil
 }
 
-// UpdateArtifactVersionState updates the state of an artifact version.
+// UpdateArtifactVersionState Updates the state of an artifact version.
+// NOTE: There are some restrictions on state transitions.
+// Notably a version cannot be transitioned to the DRAFT state from any other state.
+// The DRAFT state can only be entered (optionally) when creating a new artifact/version.
+// A version in DRAFT state can only be transitioned to ENABLED.
+// When this happens, any configured content rules will be applied.
+// This may result in a failure to change the state.
+// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Versions/operation/updateArtifactVersionState
 func (api *VersionsAPI) UpdateArtifactVersionState(
 	ctx context.Context,
 	groupId, artifactId, versionExpression string,

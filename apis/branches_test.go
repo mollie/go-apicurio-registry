@@ -2,14 +2,11 @@ package apis_test
 
 import (
 	"context"
-	"encoding/json"
 	"github.com/mollie/go-apicurio-registry/apis"
 	"github.com/mollie/go-apicurio-registry/client"
 	"github.com/mollie/go-apicurio-registry/models"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 )
 
@@ -293,30 +290,14 @@ func TestBranchAPI_UpdateBranchMetaData(t *testing.T) {
 	expectedURL := "/groups/" + stubGroupId + "/artifacts/" + stubArtifactId + "/branches/" + stubBranchID
 
 	t.Run("Success", func(t *testing.T) {
-		mockResponse := models.BranchInfo{
-			GroupId:       stubGroupId,
-			ArtifactId:    stubArtifactId,
-			BranchId:      stubBranchID,
-			Description:   stubDescription,
-			SystemDefined: false,
-			CreatedOn:     "2018-02-10T09:30Z",
-			ModifiedOn:    "2018-02-10T09:30Z",
-			ModifiedBy:    "2018-02-10T09:30Z",
-		}
-
-		server := setupMockServer(t, http.StatusOK, mockResponse, expectedURL, http.MethodPut)
+		server := setupMockServer(t, http.StatusNoContent, nil, expectedURL, http.MethodPut)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewBranchAPI(mockClient)
 
-		branch, err := api.UpdateBranchMetaData(context.Background(), stubGroupId, stubArtifactId, stubBranchID, stubUpdatedDescription)
+		err := api.UpdateBranchMetaData(context.Background(), stubGroupId, stubArtifactId, stubBranchID, stubUpdatedDescription)
 		assert.NoError(t, err)
-		assert.NotNil(t, branch)
-		assert.Equal(t, stubGroupId, branch.GroupId)
-		assert.Equal(t, stubArtifactId, branch.ArtifactId)
-		assert.Equal(t, stubBranchID, branch.BranchId)
-		assert.Equal(t, stubDescription, branch.Description)
 	})
 
 	t.Run("Validation Errors", func(t *testing.T) {
@@ -324,17 +305,17 @@ func TestBranchAPI_UpdateBranchMetaData(t *testing.T) {
 		api := apis.NewBranchAPI(mockClient)
 
 		// Empty GroupID
-		_, err := api.UpdateBranchMetaData(context.Background(), "", stubArtifactId, stubBranchID, stubUpdatedDescription)
+		err := api.UpdateBranchMetaData(context.Background(), "", stubArtifactId, stubBranchID, stubUpdatedDescription)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Group ID")
 
 		// Empty ArtifactID
-		_, err = api.UpdateBranchMetaData(context.Background(), stubGroupId, "", stubBranchID, stubUpdatedDescription)
+		err = api.UpdateBranchMetaData(context.Background(), stubGroupId, "", stubBranchID, stubUpdatedDescription)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Artifact ID")
 
 		// Empty BranchID
-		_, err = api.UpdateBranchMetaData(context.Background(), stubGroupId, stubArtifactId, "", stubUpdatedDescription)
+		err = api.UpdateBranchMetaData(context.Background(), stubGroupId, stubArtifactId, "", stubUpdatedDescription)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Branch ID")
 	})
@@ -348,9 +329,8 @@ func TestBranchAPI_UpdateBranchMetaData(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewBranchAPI(mockClient)
 
-		branch, err := api.UpdateBranchMetaData(context.Background(), stubGroupId, stubArtifactId, stubBranchID, stubUpdatedDescription)
+		err := api.UpdateBranchMetaData(context.Background(), stubGroupId, stubArtifactId, stubBranchID, stubUpdatedDescription)
 		assert.Error(t, err)
-		assert.Nil(t, branch)
 
 		assertAPIError(t, err, http.StatusNotFound, TitleNotFound)
 	})
@@ -364,9 +344,8 @@ func TestBranchAPI_UpdateBranchMetaData(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewBranchAPI(mockClient)
 
-		branch, err := api.UpdateBranchMetaData(context.Background(), stubGroupId, stubArtifactId, stubBranchID, stubUpdatedDescription)
+		err := api.UpdateBranchMetaData(context.Background(), stubGroupId, stubArtifactId, stubBranchID, stubUpdatedDescription)
 		assert.Error(t, err)
-		assert.Nil(t, branch)
 
 		assertAPIError(t, err, http.StatusInternalServerError, TitleInternalServerError)
 	})
@@ -708,28 +687,153 @@ func TestBranchAPI_AddVersionToBranch(t *testing.T) {
 	})
 }
 
-func setupMockServer(t *testing.T, statusCode int, response interface{}, expectedURL string, expectedMethod string) *httptest.Server {
-	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if expectedURL != "" {
-			assert.Equal(t, expectedURL, r.URL.Path, "request URL path should match expected")
-		}
-
-		if expectedMethod != "" {
-			assert.Equal(t, expectedMethod, r.Method, "request method match expected")
-		}
-
-		w.WriteHeader(statusCode)
-		if response != nil {
-			err := json.NewEncoder(w).Encode(response)
-			assert.NoError(t, err, "failed to encode response")
-		}
-	}))
+func setupBranchAPIClient() *apis.BranchAPI {
+	apiClient := setupHTTPClient()
+	return apis.NewBranchAPI(apiClient)
 }
 
-func assertAPIError(t *testing.T, err error, expectedStatus int, expectedTitle string) {
-	var apiErr *models.APIError
-	ok := errors.As(err, &apiErr)
-	assert.True(t, ok, "error should be of type *models.APIError")
-	assert.Equal(t, expectedStatus, apiErr.Status)
-	assert.Equal(t, expectedTitle, apiErr.Title)
+/***********************/
+/***** Integration *****/
+/***********************/
+
+func TestNewBranchAPIIntegration(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	artifactsAPI := setupArtifactAPIClient()
+	branchAPI := setupBranchAPIClient()
+
+	// Clean up before and after tests
+	t.Cleanup(func() { cleanup(t, artifactsAPI) })
+	cleanup(t, artifactsAPI)
+
+	ctx := context.Background()
+
+	t.Run("CreateBranch", func(t *testing.T) {
+		generatedArtifactID, err := generateArtifactForTest(ctx, artifactsAPI)
+		assert.NoError(t, err)
+
+		// Create a branch
+		branchInfo, err := branchAPI.CreateBranch(ctx, stubGroupId, generatedArtifactID, &models.CreateBranchRequest{
+			BranchID:    stubBranchID,
+			Description: stubDescription,
+		})
+		assert.NoError(t, err)
+		assert.NotNil(t, branchInfo)
+		assert.Equal(t, stubBranchID, branchInfo.BranchId)
+		assert.Equal(t, stubDescription, branchInfo.Description)
+	})
+
+	t.Run("ListBranches", func(t *testing.T) {
+		generatedArtifactID, err := generateArtifactForTest(ctx, artifactsAPI)
+		assert.NoError(t, err)
+
+		// Create a branch
+		branchInfo, err := branchAPI.CreateBranch(ctx, stubGroupId, generatedArtifactID, &models.CreateBranchRequest{
+			BranchID:    stubBranchID,
+			Description: stubDescription,
+		})
+		assert.NoError(t, err)
+		assert.NotNil(t, branchInfo)
+		assert.Equal(t, stubBranchID, branchInfo.BranchId)
+		assert.Equal(t, stubDescription, branchInfo.Description)
+
+		// Get branch list
+		branches, err := branchAPI.ListBranches(ctx, stubGroupId, generatedArtifactID, nil)
+		assert.NoError(t, err)
+		assert.NotNil(t, branches)
+		assert.Len(t, branches, 2)
+		assert.Equal(t, "drafts", branches[0].BranchId)
+		assert.Equal(t, stubBranchID, branches[1].BranchId)
+
+	})
+
+	t.Run("GetBranchMetaData", func(t *testing.T) {
+		generatedArtifactID, err := generateArtifactForTest(ctx, artifactsAPI)
+		assert.NoError(t, err)
+
+		// Create a branch
+		branchInfo, err := branchAPI.CreateBranch(ctx, stubGroupId, generatedArtifactID, &models.CreateBranchRequest{
+			BranchID:    stubBranchID,
+			Description: stubDescription,
+		})
+		assert.NoError(t, err)
+		assert.NotNil(t, branchInfo)
+		assert.Equal(t, stubBranchID, branchInfo.BranchId)
+		assert.Equal(t, stubDescription, branchInfo.Description)
+
+		// Get branch metadata
+		branch, err := branchAPI.GetBranchMetaData(ctx, stubGroupId, generatedArtifactID, stubBranchID)
+		assert.NoError(t, err)
+		assert.NotNil(t, branch)
+		assert.Equal(t, stubBranchID, branch.BranchId)
+		assert.Equal(t, stubDescription, branch.Description)
+	})
+
+	t.Run("UpdateBranchMetaData", func(t *testing.T) {
+		generatedArtifactID, err := generateArtifactForTest(ctx, artifactsAPI)
+		assert.NoError(t, err)
+
+		// Create a branch
+		branchInfo, err := branchAPI.CreateBranch(ctx, stubGroupId, generatedArtifactID, &models.CreateBranchRequest{
+			BranchID:    stubBranchID,
+			Description: stubDescription,
+		})
+		assert.NoError(t, err)
+		assert.NotNil(t, branchInfo)
+		assert.Equal(t, stubBranchID, branchInfo.BranchId)
+		assert.Equal(t, stubDescription, branchInfo.Description)
+
+		// Update branch metadata
+		updatedDescription := "Updated Description"
+		err = branchAPI.UpdateBranchMetaData(ctx, stubGroupId, generatedArtifactID, stubBranchID, updatedDescription)
+		assert.NoError(t, err)
+	})
+
+	t.Run("DeleteBranch", func(t *testing.T) {
+		generatedArtifactID, err := generateArtifactForTest(ctx, artifactsAPI)
+		assert.NoError(t, err)
+
+		// Create a branch
+		branchInfo, err := branchAPI.CreateBranch(ctx, stubGroupId, generatedArtifactID, &models.CreateBranchRequest{
+			BranchID:    stubBranchID,
+			Description: stubDescription,
+		})
+		assert.NoError(t, err)
+		assert.NotNil(t, branchInfo)
+		assert.Equal(t, stubBranchID, branchInfo.BranchId)
+		assert.Equal(t, stubDescription, branchInfo.Description)
+
+		// Delete branch
+		err = branchAPI.DeleteBranch(ctx, stubGroupId, generatedArtifactID, stubBranchID)
+		assert.NoError(t, err)
+	})
+
+	t.Run("AllVersions-Branch-Test", func(t *testing.T) {
+		generatedArtifactID, err := generateArtifactForTest(ctx, artifactsAPI)
+		assert.NoError(t, err)
+
+		// Create a branch
+		branchInfo, err := branchAPI.CreateBranch(ctx, stubGroupId, generatedArtifactID, &models.CreateBranchRequest{
+			BranchID:    stubBranchID,
+			Description: stubDescription,
+		})
+		assert.NoError(t, err)
+		assert.NotNil(t, branchInfo)
+		assert.Equal(t, stubBranchID, branchInfo.BranchId)
+		assert.Equal(t, stubDescription, branchInfo.Description)
+
+		// Add version to branch
+		err = branchAPI.AddVersionToBranch(ctx, stubGroupId, generatedArtifactID, stubBranchID, stubVersionID)
+		assert.NoError(t, err)
+
+		// Get versions in branch
+		versions, err := branchAPI.GetVersionsInBranch(ctx, stubGroupId, generatedArtifactID, stubBranchID, nil)
+		assert.NoError(t, err)
+		assert.NotNil(t, versions)
+		assert.Len(t, versions, 1)
+		assert.Equal(t, stubVersionID, versions[0].Version)
+	})
+
 }

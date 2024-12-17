@@ -6,12 +6,16 @@ package models
 
 // CreateArtifactRequest represents the request to create an artifact.
 type CreateArtifactRequest struct {
-	ArtifactID   string               `json:"artifactId,omitempty"`
-	ArtifactType ArtifactType         `json:"artifactType"`
+	ArtifactID   string               `json:"artifactId,omitempty" validate:"required,artifactid"`
+	ArtifactType ArtifactType         `json:"artifactType" validate:"omitempty,artifacttype"`
 	Name         string               `json:"name,omitempty"`
 	Description  string               `json:"description,omitempty"`
 	Labels       map[string]string    `json:"labels,omitempty"`
 	FirstVersion CreateVersionRequest `json:"firstVersion,omitempty"`
+}
+
+func (r *CreateArtifactRequest) Validate() error {
+	return structValidator.Struct(r)
 }
 
 // CreateVersionRequest represents the request to create a version for an artifact.
@@ -25,11 +29,19 @@ type CreateVersionRequest struct {
 	IsDraft     bool                 `json:"isDraft"`
 }
 
+func (r *CreateVersionRequest) Validate() error {
+	return structValidator.Struct(r)
+}
+
 // CreateContentRequest represents the content of an artifact.
 type CreateContentRequest struct {
-	Content     string              `json:"content"`
+	Content     string              `json:"content" validate:"required"`
 	References  []ArtifactReference `json:"references,omitempty"`
-	ContentType string              `json:"contentType"`
+	ContentType string              `json:"contentType" validate:"required"`
+}
+
+func (r *CreateContentRequest) Validate() error {
+	return structValidator.Struct(r)
 }
 
 // UpdateArtifactMetadataRequest represents the metadata update request.
@@ -61,7 +73,7 @@ type UpdateGroupRequest struct {
 }
 
 type CreateBranchRequest struct {
-	BranchID    string `json:"branch_id" validate:"required,branchid"`
+	BranchID    string `json:"branchId" validate:"required,branchid"`
 	Description string `json:"description,omitempty"`
 }
 

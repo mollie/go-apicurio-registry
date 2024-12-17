@@ -64,7 +64,7 @@ func (api *ArtifactsAPI) GetArtifactByGlobalID(ctx context.Context, globalID int
 // SearchArtifacts - Search for artifacts using the given filter parameters.
 // Search for artifacts using the given filter parameters.
 // See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifacts/operation/searchArtifacts
-func (api *ArtifactsAPI) SearchArtifacts(ctx context.Context, params *models.SearchArtifactsParams) (*[]models.SearchedArtifact, error) {
+func (api *ArtifactsAPI) SearchArtifacts(ctx context.Context, params *models.SearchArtifactsParams) ([]models.SearchedArtifact, error) {
 	query := ""
 	if params != nil {
 		if err := params.Validate(); err != nil {
@@ -84,13 +84,13 @@ func (api *ArtifactsAPI) SearchArtifacts(ctx context.Context, params *models.Sea
 		return nil, err
 	}
 
-	return &result.Artifacts, nil
+	return result.Artifacts, nil
 }
 
 // SearchArtifactsByContent searches for artifacts that match the provided content.
 // Returns a paginated list of all artifacts with at least one version that matches the posted content.
 // See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifacts/operation/searchArtifactsByContent
-func (api *ArtifactsAPI) SearchArtifactsByContent(ctx context.Context, content []byte, params *models.SearchArtifactsByContentParams) (*[]models.SearchedArtifact, error) {
+func (api *ArtifactsAPI) SearchArtifactsByContent(ctx context.Context, content []byte, params *models.SearchArtifactsByContentParams) ([]models.SearchedArtifact, error) {
 	// Convert params to query string
 	query := ""
 	if params != nil {
@@ -111,7 +111,7 @@ func (api *ArtifactsAPI) SearchArtifactsByContent(ctx context.Context, content [
 		return nil, err
 	}
 
-	return &result.Artifacts, nil
+	return result.Artifacts, nil
 }
 
 // ListArtifactReferences Returns a list containing all the artifact references using the artifact content ID.
@@ -158,7 +158,7 @@ func (api *ArtifactsAPI) ListArtifactReferencesByGlobalID(ctx context.Context, g
 
 // ListArtifactReferencesByHash Returns a list containing all the artifact references using the artifact content hash.
 // See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Artifacts/operation/referencesByContentHash
-func (api *ArtifactsAPI) ListArtifactReferencesByHash(ctx context.Context, contentHash string) (*[]models.ArtifactReference, error) {
+func (api *ArtifactsAPI) ListArtifactReferencesByHash(ctx context.Context, contentHash string) ([]models.ArtifactReference, error) {
 	url := fmt.Sprintf("%s/ids/contentHashes/%s/references", api.Client.BaseURL, contentHash)
 	resp, err := api.executeRequest(ctx, http.MethodGet, url, nil)
 	if err != nil {
@@ -170,7 +170,7 @@ func (api *ArtifactsAPI) ListArtifactReferencesByHash(ctx context.Context, conte
 		return nil, err
 	}
 
-	return &references, nil
+	return references, nil
 }
 
 // ListArtifactsInGroup lists all artifacts in a specified group.
@@ -298,6 +298,10 @@ func (api *ArtifactsAPI) DeleteArtifact(ctx context.Context, groupID, artifactId
 func (api *ArtifactsAPI) CreateArtifact(ctx context.Context, groupId string, artifact models.CreateArtifactRequest, params *models.CreateArtifactParams) (*models.ArtifactDetail, error) {
 	if err := validateInput(groupId, regexGroupIDArtifactID, "Group ID"); err != nil {
 		return nil, err
+	}
+
+	if err := artifact.Validate(); err != nil {
+		return nil, errors.Wrap(err, "invalid artifact provided")
 	}
 
 	query := ""

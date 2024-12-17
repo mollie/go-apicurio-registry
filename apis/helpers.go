@@ -62,7 +62,7 @@ func handleResponse(resp *http.Response, expectedStatus int, result interface{})
 	if resp.StatusCode != expectedStatus {
 		apiError, parseErr := parseAPIError(resp)
 		if parseErr != nil {
-			return errors.Wrap(parseErr, "unexpected server error")
+			return errors.Wrapf(parseErr, "unexpected server error: %d", resp.StatusCode)
 		}
 		return apiError
 	}
