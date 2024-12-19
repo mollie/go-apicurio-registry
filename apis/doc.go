@@ -1,46 +1,78 @@
 // Package apis provides multiple APIs to interact with the Apicurio Registry.
 //
-// The apis package exposes different high-level APIs to manage resources in the Apicurio Registry,
-// such as artifacts, metadata, and administrative operations. Each API abstracts specific
-// functionality of the Apicurio Registry, providing a clean and easy-to-use interface.
+// The apis package exposes high-level APIs to manage resources in the Apicurio Registry,
+// such as artifacts, versions, metadata, and administrative operations. Each API
+// encapsulates specific functionalities of the Apicurio Registry, ensuring a modular and
+// user-friendly interface.
 //
 // Available APIs:
-//   - AdminAPI: Provides administrative operations, such as clearing the cache and managing system-level settings.
-//   - ArtifactsAPI: Manages artifact lifecycles, including creation, retrieval, versioning, and deletion of schemas.
-//   - MetadataAPI: Handles schema metadata operations, such as tagging, labeling, and descriptions.
-//   - RulesAPI: Allows configuration and management of rules for compatibility and validation.
-//   - BranchesAPI: Allows configuration and management of branches for artifact versioning.
-//   - GroupsAPI: Manages groups related resource in apicurio registry.
-//   - VersionsAPI: Manages versions related resource in apicurio registry.
-//   - SystemsAPI: Manages systems related resource in apicurio registry.
-//   - ...
 //
-// Features:
-//   - Register, retrieve, and delete artifacts.
-//   - Perform schema versioning and compatibility checks.
-//   - Manage metadata, tags, and labels for artifacts.
-//   - Execute administrative actions on the Apicurio Registry.
+//  1. **ArtifactsAPI**: Manages artifacts (schemas), including creation, retrieval,
+//     updating, and deletion.
 //
-// Example usage:
+//  2. **VersionsAPI**: Handles operations related to artifact versions, such as retrieving
+//     and managing version history.
 //
-//	import "github.com/mollie/go-apicurio-registry/apis"
+//  3. **GroupsAPI**: Supports grouping of artifacts to enable multi-tenancy and
+//     organizational categorization.
+//
+//  4. **MetadataAPI**: Provides methods to manage artifact metadata and perform
+//     compatibility checks.
+//
+//  5. **AdminAPI**: Enables administrative operations like clearing caches, monitoring
+//     system health, and managing global settings.
+//
+// 6. **SystemAPI**: Offers methods for querying registry status and configuration.
+//
+// Example Usage:
+//
+// The following example demonstrates how to use the ArtifactsAPI to create and retrieve an artifact:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"github.com/mollie/go-apicurio-registry/apis"
+//		"github.com/mollie/go-apicurio-registry/client"
+//		"github.com/mollie/go-apicurio-registry/models"
+//	)
 //
 //	func main() {
-//	    // Initialize the Artifacts API
-//	    artifactsAPI := apis.NewArtifactsAPI("https://registry.example.com")
+//		// Initialize the API client
+//		config := client.Config{
+//			BaseURL: "https://my-registry.example.com",
+//			AuthToken: "my-token",
+//		}
+//		apiClient := client.NewApicurioClient(config)
 //
-//	    // Register a new artifact
-//	    err := artifactsAPI.RegisterArtifact("example-subject", `{"type":"record","name":"example"}`)
-//	    if err != nil {
-//	        log.Fatal("Error registering artifact:", err)
-//	    }
-//	    fmt.Println("Artifact registered successfully")
+//		// Access the ArtifactsAPI
+//		artifactsAPI := apis.NewArtifactsAPI(apiClient)
 //
-//	    // Retrieve an Artifact
-//	    artifact, err := artifactsAPI.GetArtifact("example-subject", "latest")
-//	    if err != nil {
-//	        log.Fatal("Error fetching artifact:", err)
-//	    }
-//	    fmt.Println("Retrieved artifact:", artifact)
+//		// Create a new artifact
+//		artifact := models.Artifact{
+//			GroupID: "example-group",
+//			ID: "example-artifact",
+//			Content: []byte(`{"type": "record", "name": "Example", "fields": [{"name": "field1", "type": "string"}]}`),
+//			ContentType: "application/json",
+//		}
+//		response, err := artifactsAPI.Create(artifact)
+//		if err != nil {
+//			fmt.Printf("Error creating artifact: %v\n", err)
+//			return
+//		}
+//		fmt.Printf("Artifact created with ID: %s\n", response.ID)
+//
+//		// Retrieve artifact metadata
+//		metadata, err := artifactsAPI.GetMetadata("example-group", "example-artifact")
+//		if err != nil {
+//			fmt.Printf("Error retrieving metadata: %v\n", err)
+//			return
+//		}
+//		fmt.Printf("Artifact metadata: %+v\n", metadata)
 //	}
+//
+// Note:
+//
+// Each API can be accessed via its respective constructor function (e.g., `NewArtifactsAPI`,
+// `NewAdminAPI`). These APIs are designed to integrate seamlessly with the client package.
 package apis
