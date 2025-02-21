@@ -20,7 +20,7 @@ func (r *CreateArtifactRequest) Validate() error {
 
 // CreateVersionRequest represents the request to create a version for an artifact.
 type CreateVersionRequest struct {
-	Version     string               `json:"version"`
+	Version     string               `json:"version,omitempty"`
 	Content     CreateContentRequest `json:"content" validate:"required"`
 	Name        string               `json:"name,omitempty"`
 	Description string               `json:"description,omitempty"`
