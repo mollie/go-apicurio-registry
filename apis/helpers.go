@@ -1,8 +1,11 @@
 package apis
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/mollie/go-apicurio-registry/client"
 	"github.com/mollie/go-apicurio-registry/models"
 	"github.com/pkg/errors"
 	"io"
@@ -93,4 +96,49 @@ func handleRawResponse(resp *http.Response, expectedStatus int) (string, error) 
 	}
 
 	return string(content), nil
+}
+
+// executeRequest handles the creation and execution of an HTTP request.
+func executeRequest(ctx context.Context, client *client.Client, method, url string, body interface{}) (*http.Response, error) {
+	var reqBody io.Reader
+	contentType := ""
+
+	if body != nil {
+		switch v := body.(type) {
+		case string:
+			reqBody = bytes.NewReader([]byte(v))
+			contentType = "*/*"
+		case []byte:
+			reqBody = bytes.NewReader(v)
+			contentType = "*/*"
+		default:
+			contentType = "application/json"
+			jsonData, err := json.Marshal(body)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to marshal request body as JSON")
+			}
+			reqBody = bytes.NewReader(jsonData)
+		}
+	} else {
+		reqBody = nil // Send request without body
+	}
+
+	// Create the HTTP request
+	req, err := http.NewRequestWithContext(ctx, method, url, reqBody)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create HTTP request")
+	}
+
+	// Set Content-Type header only if there is a body
+	if contentType != "" {
+		req.Header.Set("Content-Type", contentType)
+	}
+
+	// Execute the request
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to execute HTTP request")
+	}
+
+	return resp, nil
 }
