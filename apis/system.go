@@ -1,13 +1,10 @@
 package apis
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/mollie/go-apicurio-registry/client"
 	"github.com/mollie/go-apicurio-registry/models"
-	"github.com/pkg/errors"
 	"net/http"
 )
 
@@ -97,41 +94,5 @@ func (api *SystemAPI) GetCurrentUser(ctx context.Context) (*models.UserInfo, err
 
 // executeRequest handles the creation and execution of an HTTP request.
 func (api *SystemAPI) executeRequest(ctx context.Context, method, url string, body interface{}) (*http.Response, error) {
-	var reqBody []byte
-	var err error
-	contentType := "*/*"
-
-	switch v := body.(type) {
-	case string:
-		reqBody = []byte(v)
-		contentType = "*/*"
-	case []byte:
-		reqBody = v
-		contentType = "*/*"
-	default:
-		contentType = "application/json"
-		reqBody, err = json.Marshal(body)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to marshal request body as JSON")
-		}
-	}
-
-	// Create the HTTP request
-	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewReader(reqBody))
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create HTTP request")
-	}
-
-	// Set appropriate Content-Type header
-	if body != nil {
-		req.Header.Set("Content-Type", contentType)
-	}
-
-	// Execute the request
-	resp, err := api.Client.Do(req)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to execute HTTP request")
-	}
-
-	return resp, nil
+	return executeRequest(ctx, api.Client, method, url, body)
 }
