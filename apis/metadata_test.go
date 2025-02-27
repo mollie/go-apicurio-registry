@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
 	"github.com/mollie/go-apicurio-registry/apis"
 	"github.com/mollie/go-apicurio-registry/client"
 	"github.com/mollie/go-apicurio-registry/models"
 	"github.com/stretchr/testify/assert"
-	"net/http"
-	"net/http/httptest"
-	"testing"
 )
 
 const (
@@ -45,7 +46,12 @@ func TestGetArtifactVersionMetadata(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewMetadataAPI(mockClient)
 
-		result, err := api.GetArtifactVersionMetadata(context.Background(), "test-group", "artifact-1", "1.0")
+		result, err := api.GetArtifactVersionMetadata(
+			context.Background(),
+			"test-group",
+			"artifact-1",
+			"1.0",
+		)
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Equal(t, "Test Artifact", result.Name)
@@ -70,7 +76,12 @@ func TestGetArtifactVersionMetadata(t *testing.T) {
 		}
 
 		for _, test := range tests {
-			_, err := api.GetArtifactVersionMetadata(ctx, test.groupID, test.artifactID, test.version)
+			_, err := api.GetArtifactVersionMetadata(
+				ctx,
+				test.groupID,
+				test.artifactID,
+				test.version,
+			)
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), test.expectedError)
 		}
@@ -85,7 +96,12 @@ func TestGetArtifactVersionMetadata(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewMetadataAPI(mockClient)
 
-		result, err := api.GetArtifactVersionMetadata(context.Background(), "test-group", "artifact-1", "1.0")
+		result, err := api.GetArtifactVersionMetadata(
+			context.Background(),
+			"test-group",
+			"artifact-1",
+			"1.0",
+		)
 		assert.Error(t, err)
 		assert.Nil(t, result)
 	})
@@ -105,7 +121,13 @@ func TestUpdateArtifactVersionMetadata(t *testing.T) {
 			Description: "Updated Description",
 		}
 
-		err := api.UpdateArtifactVersionMetadata(context.Background(), "test-group", "artifact-1", "1.0.0", metadata)
+		err := api.UpdateArtifactVersionMetadata(
+			context.Background(),
+			"test-group",
+			"artifact-1",
+			"1.0.0",
+			metadata,
+		)
 		assert.NoError(t, err)
 	})
 
@@ -122,13 +144,37 @@ func TestUpdateArtifactVersionMetadata(t *testing.T) {
 			metadata      models.UpdateArtifactMetadataRequest
 			expectedError string
 		}{
-			{"", "artifact-1", "1.0", models.UpdateArtifactMetadataRequest{Name: "Updated"}, "Group ID"},
-			{"test-group", "", "1.0", models.UpdateArtifactMetadataRequest{Name: "Updated"}, "Artifact ID"},
-			{"test-group", "artifact-1", "", models.UpdateArtifactMetadataRequest{Name: "Updated"}, "Version"},
+			{
+				"",
+				"artifact-1",
+				"1.0",
+				models.UpdateArtifactMetadataRequest{Name: "Updated"},
+				"Group ID",
+			},
+			{
+				"test-group",
+				"",
+				"1.0",
+				models.UpdateArtifactMetadataRequest{Name: "Updated"},
+				"Artifact ID",
+			},
+			{
+				"test-group",
+				"artifact-1",
+				"",
+				models.UpdateArtifactMetadataRequest{Name: "Updated"},
+				"Version",
+			},
 		}
 
 		for _, test := range tests {
-			err := api.UpdateArtifactVersionMetadata(ctx, test.groupID, test.artifactID, test.version, test.metadata)
+			err := api.UpdateArtifactVersionMetadata(
+				ctx,
+				test.groupID,
+				test.artifactID,
+				test.version,
+				test.metadata,
+			)
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), test.expectedError)
 		}
@@ -147,7 +193,13 @@ func TestUpdateArtifactVersionMetadata(t *testing.T) {
 			Name: "",
 		}
 
-		err := api.UpdateArtifactVersionMetadata(context.Background(), "test-group", "artifact-1", "1.0", metadata)
+		err := api.UpdateArtifactVersionMetadata(
+			context.Background(),
+			"test-group",
+			"artifact-1",
+			"1.0",
+			metadata,
+		)
 		assert.Error(t, err)
 	})
 }
@@ -232,7 +284,12 @@ func TestUpdateArtifactMetadata(t *testing.T) {
 			Labels:      map[string]string{"env": "prod"},
 		}
 
-		err := api.UpdateArtifactMetadata(context.Background(), "test-group", "artifact-1", metadata)
+		err := api.UpdateArtifactMetadata(
+			context.Background(),
+			"test-group",
+			"artifact-1",
+			metadata,
+		)
 		assert.NoError(t, err)
 	})
 
@@ -249,7 +306,12 @@ func TestUpdateArtifactMetadata(t *testing.T) {
 			expectedError string
 		}{
 			{"", "artifact-1", models.UpdateArtifactMetadataRequest{Name: "Updated"}, "Group ID"},
-			{"test-group", "", models.UpdateArtifactMetadataRequest{Name: "Updated"}, "Artifact ID"},
+			{
+				"test-group",
+				"",
+				models.UpdateArtifactMetadataRequest{Name: "Updated"},
+				"Artifact ID",
+			},
 		}
 
 		for _, test := range tests {
@@ -270,7 +332,12 @@ func TestUpdateArtifactMetadata(t *testing.T) {
 
 		metadata := models.UpdateArtifactMetadataRequest{}
 
-		err := api.UpdateArtifactMetadata(context.Background(), "test-group", "artifact-1", metadata)
+		err := api.UpdateArtifactMetadata(
+			context.Background(),
+			"test-group",
+			"artifact-1",
+			metadata,
+		)
 		assert.Error(t, err)
 	})
 }
@@ -322,7 +389,12 @@ func TestMetadataAPIIntegration(t *testing.T) {
 
 	// Test GetArtifactVersionMetadata
 	t.Run("GetArtifactVersionMetadata", func(t *testing.T) {
-		result, err := metadataAPI.GetArtifactVersionMetadata(ctx, stubGroupId, stubArtifactId, versionExpression)
+		result, err := metadataAPI.GetArtifactVersionMetadata(
+			ctx,
+			stubGroupId,
+			stubArtifactId,
+			versionExpression,
+		)
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		fmt.Println(result)
@@ -337,11 +409,22 @@ func TestMetadataAPIIntegration(t *testing.T) {
 			Description: "Updated Artifact Version Description",
 		}
 
-		err := metadataAPI.UpdateArtifactVersionMetadata(ctx, stubGroupId, stubArtifactId, versionExpression, updateRequest)
+		err := metadataAPI.UpdateArtifactVersionMetadata(
+			ctx,
+			stubGroupId,
+			stubArtifactId,
+			versionExpression,
+			updateRequest,
+		)
 		assert.NoError(t, err)
 
 		// Verify the update
-		updatedMetadata, err := metadataAPI.GetArtifactVersionMetadata(ctx, stubGroupId, stubArtifactId, versionExpression)
+		updatedMetadata, err := metadataAPI.GetArtifactVersionMetadata(
+			ctx,
+			stubGroupId,
+			stubArtifactId,
+			versionExpression,
+		)
 		assert.NoError(t, err)
 		assert.Equal(t, "Updated Artifact Version Name", updatedMetadata.Name)
 		assert.Equal(t, "Updated Artifact Version Description", updatedMetadata.Description)

@@ -3,12 +3,13 @@ package apis_test
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"testing"
+
 	"github.com/mollie/go-apicurio-registry/apis"
 	"github.com/mollie/go-apicurio-registry/client"
 	"github.com/mollie/go-apicurio-registry/models"
 	"github.com/stretchr/testify/assert"
-	"net/http"
-	"testing"
 )
 
 func TestGroupAPI_ListGroups(t *testing.T) {
@@ -29,9 +30,18 @@ func TestGroupAPI_ListGroups(t *testing.T) {
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
 
-		server := setupMockServer(t, http.StatusInternalServerError, errorResponse, "/groups", http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			errorResponse,
+			"/groups",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -86,9 +96,18 @@ func TestGroupAPI_CreateGroup(t *testing.T) {
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
 
-		server := setupMockServer(t, http.StatusInternalServerError, errorResponse, "/groups", http.MethodPost)
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			errorResponse,
+			"/groups",
+			http.MethodPost,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -130,7 +149,13 @@ func TestGroupAPI_GetGroupById(t *testing.T) {
 	t.Run("NotFound", func(t *testing.T) {
 		errorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
 
-		server := setupMockServer(t, http.StatusNotFound, errorResponse, "/groups/group1", http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusNotFound,
+			errorResponse,
+			"/groups/group1",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -143,9 +168,18 @@ func TestGroupAPI_GetGroupById(t *testing.T) {
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
 
-		server := setupMockServer(t, http.StatusInternalServerError, errorResponse, "/groups/group1", http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			errorResponse,
+			"/groups/group1",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -196,7 +230,10 @@ func TestGroupAPI_UpdateGroupMetadata(t *testing.T) {
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
 
 		server := setupMockServer(t, http.StatusInternalServerError, errorResponse,
 			"/groups/group1", http.MethodPut)
@@ -249,7 +286,10 @@ func TestGroupAPI_DeleteGroup(t *testing.T) {
 	})
 
 	t.Run("Not Allowed", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusMethodNotAllowed, Title: TitleMethodNotAllowed}
+		errorResponse := models.APIError{
+			Status: http.StatusMethodNotAllowed,
+			Title:  TitleMethodNotAllowed,
+		}
 
 		server := setupMockServer(t, http.StatusMethodNotAllowed, errorResponse,
 			"/groups/group1", http.MethodDelete)
@@ -264,7 +304,10 @@ func TestGroupAPI_DeleteGroup(t *testing.T) {
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
 
 		server := setupMockServer(t, http.StatusInternalServerError, errorResponse,
 			"/groups/group1", http.MethodDelete)
@@ -297,9 +340,18 @@ func TestGroupAPI_SearchGroups(t *testing.T) {
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
 
-		server := setupMockServer(t, http.StatusInternalServerError, errorResponse, "/search/groups", http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			errorResponse,
+			"/search/groups",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -356,7 +408,10 @@ func TestGroupsAPI_ListGroupRules(t *testing.T) {
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
 
 		server := setupMockServer(t, http.StatusInternalServerError, errorResponse,
 			fmt.Sprintf("/groups/%s/rules", stubGroupId), http.MethodGet)
@@ -381,7 +436,12 @@ func TestGroupsAPI_CreateGroupRule(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewGroupAPI(mockClient)
 
-		err := api.CreateGroupRule(context.Background(), stubGroupId, models.RuleValidity, models.ValidityLevelFull)
+		err := api.CreateGroupRule(
+			context.Background(),
+			stubGroupId,
+			models.RuleValidity,
+			models.ValidityLevelFull,
+		)
 		assert.NoError(t, err)
 	})
 
@@ -389,7 +449,12 @@ func TestGroupsAPI_CreateGroupRule(t *testing.T) {
 		mockClient := &client.Client{BaseURL: "http://example.com", HTTPClient: http.DefaultClient}
 		api := apis.NewGroupAPI(mockClient)
 
-		err := api.CreateGroupRule(context.Background(), "", models.RuleValidity, models.ValidityLevelFull)
+		err := api.CreateGroupRule(
+			context.Background(),
+			"",
+			models.RuleValidity,
+			models.ValidityLevelFull,
+		)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Group ID=''")
 	})
@@ -404,7 +469,12 @@ func TestGroupsAPI_CreateGroupRule(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewGroupAPI(mockClient)
 
-		err := api.CreateGroupRule(context.Background(), stubGroupId, models.RuleValidity, models.ValidityLevelFull)
+		err := api.CreateGroupRule(
+			context.Background(),
+			stubGroupId,
+			models.RuleValidity,
+			models.ValidityLevelFull,
+		)
 		assert.Error(t, err)
 		assertAPIError(t, err, http.StatusBadRequest, TitleBadRequest)
 	})
@@ -419,7 +489,12 @@ func TestGroupsAPI_CreateGroupRule(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewGroupAPI(mockClient)
 
-		err := api.CreateGroupRule(context.Background(), stubGroupId, models.RuleValidity, models.ValidityLevelFull)
+		err := api.CreateGroupRule(
+			context.Background(),
+			stubGroupId,
+			models.RuleValidity,
+			models.ValidityLevelFull,
+		)
 		assert.Error(t, err)
 		assertAPIError(t, err, http.StatusConflict, TitleConflict)
 	})
@@ -434,13 +509,21 @@ func TestGroupsAPI_CreateGroupRule(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewGroupAPI(mockClient)
 
-		err := api.CreateGroupRule(context.Background(), stubGroupId, models.RuleValidity, models.ValidityLevelFull)
+		err := api.CreateGroupRule(
+			context.Background(),
+			stubGroupId,
+			models.RuleValidity,
+			models.ValidityLevelFull,
+		)
 		assert.Error(t, err)
 		assertAPIError(t, err, http.StatusNotFound, TitleNotFound)
 	})
 
 	t.Run("InternalServerError", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
 
 		server := setupMockServer(t, http.StatusInternalServerError, errorResponse,
 			fmt.Sprintf("/groups/%s/rules", stubGroupId), http.MethodPost)
@@ -449,7 +532,12 @@ func TestGroupsAPI_CreateGroupRule(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewGroupAPI(mockClient)
 
-		err := api.CreateGroupRule(context.Background(), stubGroupId, models.RuleValidity, models.ValidityLevelFull)
+		err := api.CreateGroupRule(
+			context.Background(),
+			stubGroupId,
+			models.RuleValidity,
+			models.ValidityLevelFull,
+		)
 		assert.Error(t, err)
 		assertAPIError(t, err, http.StatusInternalServerError, TitleInternalServerError)
 	})
@@ -493,7 +581,10 @@ func TestGroupsAPI_DeleteAllGroupRule(t *testing.T) {
 	})
 
 	t.Run("InternalServerError", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
 
 		server := setupMockServer(t, http.StatusInternalServerError, errorResponse,
 			fmt.Sprintf("/groups/%s/rules", stubGroupId), http.MethodDelete)
@@ -558,7 +649,10 @@ func TestGroupsAPI_GetGroupRule(t *testing.T) {
 
 	t.Run("InternalServerError", func(t *testing.T) {
 		mockRule := models.RuleValidity
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
 
 		server := setupMockServer(t, http.StatusInternalServerError, errorResponse,
 			fmt.Sprintf("/groups/%s/rules/%s", stubGroupId, mockRule), http.MethodGet)
@@ -589,7 +683,12 @@ func TestGroupsAPI_UpdateGroupRule(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewGroupAPI(mockClient)
 
-		err := api.UpdateGroupRule(context.Background(), stubGroupId, mockRule, models.ValidityLevelFull)
+		err := api.UpdateGroupRule(
+			context.Background(),
+			stubGroupId,
+			mockRule,
+			models.ValidityLevelFull,
+		)
 		assert.NoError(t, err)
 	})
 
@@ -597,7 +696,12 @@ func TestGroupsAPI_UpdateGroupRule(t *testing.T) {
 		mockClient := &client.Client{BaseURL: "http://example.com", HTTPClient: http.DefaultClient}
 		api := apis.NewGroupAPI(mockClient)
 
-		err := api.UpdateGroupRule(context.Background(), "", models.RuleValidity, models.ValidityLevelFull)
+		err := api.UpdateGroupRule(
+			context.Background(),
+			"",
+			models.RuleValidity,
+			models.ValidityLevelFull,
+		)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Group ID=''")
 	})
@@ -613,14 +717,22 @@ func TestGroupsAPI_UpdateGroupRule(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewGroupAPI(mockClient)
 
-		err := api.UpdateGroupRule(context.Background(), stubGroupId, mockRule, models.ValidityLevelFull)
+		err := api.UpdateGroupRule(
+			context.Background(),
+			stubGroupId,
+			mockRule,
+			models.ValidityLevelFull,
+		)
 		assert.Error(t, err)
 		assertAPIError(t, err, http.StatusNotFound, TitleNotFound)
 	})
 
 	t.Run("InternalServerError", func(t *testing.T) {
 		mockRule := models.RuleValidity
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
 
 		server := setupMockServer(t, http.StatusInternalServerError, errorResponse,
 			fmt.Sprintf("/groups/%s/rules/%s", stubGroupId, mockRule), http.MethodPut)
@@ -629,7 +741,12 @@ func TestGroupsAPI_UpdateGroupRule(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewGroupAPI(mockClient)
 
-		err := api.UpdateGroupRule(context.Background(), stubGroupId, mockRule, models.ValidityLevelFull)
+		err := api.UpdateGroupRule(
+			context.Background(),
+			stubGroupId,
+			mockRule,
+			models.ValidityLevelFull,
+		)
 		assert.Error(t, err)
 		assertAPIError(t, err, http.StatusInternalServerError, TitleInternalServerError)
 	})
@@ -676,7 +793,10 @@ func TestGroupsAPI_DeleteGroupRule(t *testing.T) {
 
 	t.Run("InternalServerError", func(t *testing.T) {
 		mockRule := models.RuleValidity
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
 
 		server := setupMockServer(t, http.StatusInternalServerError, errorResponse,
 			fmt.Sprintf("/groups/%s/rules/%s", stubGroupId, mockRule), http.MethodDelete)
@@ -759,7 +879,12 @@ func TestGroupsAPIIntegration(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Update the group
-		err = groupAPI.UpdateGroupMetadata(ctx, randomGroupID, stubUpdatedDescription, stubUpdatedLabels)
+		err = groupAPI.UpdateGroupMetadata(
+			ctx,
+			randomGroupID,
+			stubUpdatedDescription,
+			stubUpdatedLabels,
+		)
 		assert.NoError(t, err)
 
 		// Get the group and verify the update
@@ -803,7 +928,12 @@ func TestGroupsAPIIntegration(t *testing.T) {
 		assert.Len(t, rules, 0)
 
 		// Create a rule
-		err = groupAPI.CreateGroupRule(ctx, randomGroupID, models.RuleValidity, models.ValidityLevelFull)
+		err = groupAPI.CreateGroupRule(
+			ctx,
+			randomGroupID,
+			models.RuleValidity,
+			models.ValidityLevelFull,
+		)
 		assert.NoError(t, err)
 
 		// List group rules
@@ -818,7 +948,12 @@ func TestGroupsAPIIntegration(t *testing.T) {
 		assert.Equal(t, models.ValidityLevelFull, rule)
 
 		// Update the rule
-		err = groupAPI.UpdateGroupRule(ctx, randomGroupID, models.RuleValidity, models.ValidityLevelSyntaxOnly)
+		err = groupAPI.UpdateGroupRule(
+			ctx,
+			randomGroupID,
+			models.RuleValidity,
+			models.ValidityLevelSyntaxOnly,
+		)
 		assert.NoError(t, err)
 
 		// Get the rule
@@ -836,11 +971,26 @@ func TestGroupsAPIIntegration(t *testing.T) {
 		assert.Len(t, rules, 0)
 
 		// Create three rules
-		err = groupAPI.CreateGroupRule(ctx, randomGroupID, models.RuleValidity, models.ValidityLevelFull)
+		err = groupAPI.CreateGroupRule(
+			ctx,
+			randomGroupID,
+			models.RuleValidity,
+			models.ValidityLevelFull,
+		)
 		assert.NoError(t, err)
-		err = groupAPI.CreateGroupRule(ctx, randomGroupID, models.RuleCompatibility, models.CompatibilityLevelFull)
+		err = groupAPI.CreateGroupRule(
+			ctx,
+			randomGroupID,
+			models.RuleCompatibility,
+			models.CompatibilityLevelFull,
+		)
 		assert.NoError(t, err)
-		err = groupAPI.CreateGroupRule(ctx, randomGroupID, models.RuleIntegrity, models.IntegrityLevelFull)
+		err = groupAPI.CreateGroupRule(
+			ctx,
+			randomGroupID,
+			models.RuleIntegrity,
+			models.IntegrityLevelFull,
+		)
 		assert.NoError(t, err)
 
 		// List group rules

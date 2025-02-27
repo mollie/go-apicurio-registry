@@ -3,10 +3,12 @@ package apis
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/url"
+
 	"github.com/mollie/go-apicurio-registry/client"
 	"github.com/mollie/go-apicurio-registry/models"
 	"github.com/pkg/errors"
-	"net/http"
 )
 
 type GroupAPI struct {
@@ -21,7 +23,10 @@ func NewGroupAPI(client *client.Client) *GroupAPI {
 
 // ListGroups Returns a list of all groups. This list is paged.
 // See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Groups/operation/listGroups
-func (api *GroupAPI) ListGroups(ctx context.Context, params *models.ListGroupsParams) ([]models.GroupInfo, error) {
+func (api *GroupAPI) ListGroups(
+	ctx context.Context,
+	params *models.ListGroupsParams,
+) ([]models.GroupInfo, error) {
 	query := ""
 	if params != nil {
 		if err := params.Validate(); err != nil {
@@ -30,8 +35,8 @@ func (api *GroupAPI) ListGroups(ctx context.Context, params *models.ListGroupsPa
 		query = "?" + params.ToQuery().Encode()
 	}
 
-	url := fmt.Sprintf("%s/groups%s", api.Client.BaseURL, query)
-	resp, err := api.executeRequest(ctx, http.MethodGet, url, nil)
+	urlPath := fmt.Sprintf("%s/groups%s", api.Client.BaseURL, query)
+	resp, err := api.executeRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -46,19 +51,23 @@ func (api *GroupAPI) ListGroups(ctx context.Context, params *models.ListGroupsPa
 
 // CreateGroup Creates a new group.
 // See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Groups/operation/createGroup
-func (api *GroupAPI) CreateGroup(ctx context.Context, groupId, description string, labels map[string]string) (*models.GroupInfo, error) {
+func (api *GroupAPI) CreateGroup(
+	ctx context.Context,
+	groupId, description string,
+	labels map[string]string,
+) (*models.GroupInfo, error) {
 	if err := validateInput(groupId, regexGroupIDArtifactID, "Group ID"); err != nil {
 		return nil, err
 	}
 
-	url := fmt.Sprintf("%s/groups", api.Client.BaseURL)
+	urlPath := fmt.Sprintf("%s/groups", api.Client.BaseURL)
 	body := models.CreateGroupRequest{
 		GroupID:     groupId,
 		Description: description,
 		Labels:      labels,
 	}
 
-	resp, err := api.executeRequest(ctx, http.MethodPost, url, body)
+	resp, err := api.executeRequest(ctx, http.MethodPost, urlPath, body)
 	if err != nil {
 		return nil, err
 	}
@@ -79,9 +88,9 @@ func (api *GroupAPI) GetGroupById(ctx context.Context, groupId string) (*models.
 	if err := validateInput(groupId, regexGroupIDArtifactID, "Group ID"); err != nil {
 		return nil, err
 	}
-	url := fmt.Sprintf("%s/groups/%s", api.Client.BaseURL, groupId)
+	urlPath := fmt.Sprintf("%s/groups/%s", api.Client.BaseURL, url.PathEscape(groupId))
 
-	resp, err := api.executeRequest(ctx, http.MethodGet, url, nil)
+	resp, err := api.executeRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -98,18 +107,23 @@ func (api *GroupAPI) GetGroupById(ctx context.Context, groupId string) (*models.
 
 // UpdateGroupMetadata Updates the metadata of the group with the specified ID.
 // See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Groups/operation/updateGroupById
-func (api *GroupAPI) UpdateGroupMetadata(ctx context.Context, groupId string, description string, labels map[string]string) error {
+func (api *GroupAPI) UpdateGroupMetadata(
+	ctx context.Context,
+	groupId string,
+	description string,
+	labels map[string]string,
+) error {
 	if err := validateInput(groupId, regexGroupIDArtifactID, "Group ID"); err != nil {
 		return err
 	}
 
-	url := fmt.Sprintf("%s/groups/%s", api.Client.BaseURL, groupId)
+	urlPath := fmt.Sprintf("%s/groups/%s", api.Client.BaseURL, url.PathEscape(groupId))
 	body := models.UpdateGroupRequest{
 		Description: description,
 		Labels:      labels,
 	}
 
-	resp, err := api.executeRequest(ctx, http.MethodPut, url, body)
+	resp, err := api.executeRequest(ctx, http.MethodPut, urlPath, body)
 	if err != nil {
 		return err
 	}
@@ -124,9 +138,9 @@ func (api *GroupAPI) DeleteGroup(ctx context.Context, groupId string) error {
 		return err
 	}
 
-	url := fmt.Sprintf("%s/groups/%s", api.Client.BaseURL, groupId)
+	urlPath := fmt.Sprintf("%s/groups/%s", api.Client.BaseURL, url.PathEscape(groupId))
 
-	resp, err := api.executeRequest(ctx, http.MethodDelete, url, nil)
+	resp, err := api.executeRequest(ctx, http.MethodDelete, urlPath, nil)
 	if err != nil {
 		return err
 	}
@@ -137,7 +151,10 @@ func (api *GroupAPI) DeleteGroup(ctx context.Context, groupId string) error {
 
 // SearchGroups Returns a list of groups that match the specified criteria. This list is paged.
 // See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Groups/operation/searchGroups
-func (api *GroupAPI) SearchGroups(ctx context.Context, params *models.SearchGroupsParams) ([]models.GroupInfo, error) {
+func (api *GroupAPI) SearchGroups(
+	ctx context.Context,
+	params *models.SearchGroupsParams,
+) ([]models.GroupInfo, error) {
 	query := ""
 	if params != nil {
 		if err := params.Validate(); err != nil {
@@ -146,8 +163,8 @@ func (api *GroupAPI) SearchGroups(ctx context.Context, params *models.SearchGrou
 		query = "?" + params.ToQuery().Encode()
 	}
 
-	url := fmt.Sprintf("%s/search/groups%s", api.Client.BaseURL, query)
-	resp, err := api.executeRequest(ctx, http.MethodGet, url, nil)
+	urlPath := fmt.Sprintf("%s/search/groups%s", api.Client.BaseURL, query)
+	resp, err := api.executeRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -170,8 +187,8 @@ func (api *GroupAPI) ListGroupRules(ctx context.Context, groupID string) ([]mode
 		return nil, err
 	}
 
-	url := fmt.Sprintf("%s/groups/%s/rules", api.Client.BaseURL, groupID)
-	resp, err := api.executeRequest(ctx, http.MethodGet, url, nil)
+	urlPath := fmt.Sprintf("%s/groups/%s/rules", api.Client.BaseURL, url.PathEscape(groupID))
+	resp, err := api.executeRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -187,19 +204,24 @@ func (api *GroupAPI) ListGroupRules(ctx context.Context, groupID string) ([]mode
 // CreateGroupRule Adds a rule to the list of rules that get applied to an artifact in the group when adding new versions.
 // All configured rules must pass to successfully add a new artifact version.
 // See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Group-rules/operation/createGroupRule
-func (api *GroupAPI) CreateGroupRule(ctx context.Context, groupID string, rule models.Rule, level models.RuleLevel) error {
+func (api *GroupAPI) CreateGroupRule(
+	ctx context.Context,
+	groupID string,
+	rule models.Rule,
+	level models.RuleLevel,
+) error {
 	if err := validateInput(groupID, regexGroupIDArtifactID, "Group ID"); err != nil {
 		return err
 	}
 
-	url := fmt.Sprintf("%s/groups/%s/rules", api.Client.BaseURL, groupID)
+	urlPath := fmt.Sprintf("%s/groups/%s/rules", api.Client.BaseURL, url.PathEscape(groupID))
 
 	// Prepare the request body
 	body := models.CreateUpdateRuleRequest{
 		RuleType: rule,
 		Config:   level,
 	}
-	resp, err := api.executeRequest(ctx, http.MethodPost, url, body)
+	resp, err := api.executeRequest(ctx, http.MethodPost, urlPath, body)
 	if err != nil {
 		return err
 	}
@@ -215,8 +237,8 @@ func (api *GroupAPI) DeleteAllGroupRule(ctx context.Context, groupID string) err
 		return err
 	}
 
-	url := fmt.Sprintf("%s/groups/%s/rules", api.Client.BaseURL, groupID)
-	resp, err := api.executeRequest(ctx, http.MethodDelete, url, nil)
+	urlPath := fmt.Sprintf("%s/groups/%s/rules", api.Client.BaseURL, url.PathEscape(groupID))
+	resp, err := api.executeRequest(ctx, http.MethodDelete, urlPath, nil)
 	if err != nil {
 		return err
 	}
@@ -228,13 +250,22 @@ func (api *GroupAPI) DeleteAllGroupRule(ctx context.Context, groupID string) err
 // Returns information about a single rule configured for a group.
 // This is useful when you want to know what the current configuration settings are for a specific rule.
 // See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Group-rules/operation/getGroupRuleConfig
-func (api *GroupAPI) GetGroupRule(ctx context.Context, groupID string, rule models.Rule) (models.RuleLevel, error) {
+func (api *GroupAPI) GetGroupRule(
+	ctx context.Context,
+	groupID string,
+	rule models.Rule,
+) (models.RuleLevel, error) {
 	if err := validateInput(groupID, regexGroupIDArtifactID, "Group ID"); err != nil {
 		return "", err
 	}
 
-	url := fmt.Sprintf("%s/groups/%s/rules/%s", api.Client.BaseURL, groupID, rule)
-	resp, err := api.executeRequest(ctx, http.MethodGet, url, nil)
+	urlPath := fmt.Sprintf(
+		"%s/groups/%s/rules/%s",
+		api.Client.BaseURL,
+		url.PathEscape(groupID),
+		rule,
+	)
+	resp, err := api.executeRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return "", err
 	}
@@ -250,19 +281,29 @@ func (api *GroupAPI) GetGroupRule(ctx context.Context, groupID string, rule mode
 // UpdateGroupRule Updates the configuration of a single rule for the group.
 // The configuration data is specific to each rule type, so the configuration of the COMPATIBILITY rule is in a different format from the configuration of the VALIDITY rule.
 // See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Group-rules/operation/updateGroupRuleConfig
-func (api *GroupAPI) UpdateGroupRule(ctx context.Context, groupID string, rule models.Rule, level models.RuleLevel) error {
+func (api *GroupAPI) UpdateGroupRule(
+	ctx context.Context,
+	groupID string,
+	rule models.Rule,
+	level models.RuleLevel,
+) error {
 	if err := validateInput(groupID, regexGroupIDArtifactID, "Group ID"); err != nil {
 		return err
 	}
 
-	url := fmt.Sprintf("%s/groups/%s/rules/%s", api.Client.BaseURL, groupID, rule)
+	urlPath := fmt.Sprintf(
+		"%s/groups/%s/rules/%s",
+		api.Client.BaseURL,
+		url.PathEscape(groupID),
+		rule,
+	)
 
 	// Prepare the request body
 	body := models.CreateUpdateRuleRequest{
 		RuleType: rule,
 		Config:   level,
 	}
-	resp, err := api.executeRequest(ctx, http.MethodPut, url, body)
+	resp, err := api.executeRequest(ctx, http.MethodPut, urlPath, body)
 	if err != nil {
 		return err
 	}
@@ -282,8 +323,13 @@ func (api *GroupAPI) DeleteGroupRule(ctx context.Context, groupID string, rule m
 		return err
 	}
 
-	url := fmt.Sprintf("%s/groups/%s/rules/%s", api.Client.BaseURL, groupID, rule)
-	resp, err := api.executeRequest(ctx, http.MethodDelete, url, nil)
+	urlPath := fmt.Sprintf(
+		"%s/groups/%s/rules/%s",
+		api.Client.BaseURL,
+		url.PathEscape(groupID),
+		rule,
+	)
+	resp, err := api.executeRequest(ctx, http.MethodDelete, urlPath, nil)
 	if err != nil {
 		return err
 	}
@@ -292,6 +338,10 @@ func (api *GroupAPI) DeleteGroupRule(ctx context.Context, groupID string, rule m
 }
 
 // executeRequest handles the creation and execution of an HTTP request.
-func (api *GroupAPI) executeRequest(ctx context.Context, method, url string, body interface{}) (*http.Response, error) {
+func (api *GroupAPI) executeRequest(
+	ctx context.Context,
+	method, url string,
+	body interface{},
+) (*http.Response, error) {
 	return executeRequest(ctx, api.Client, method, url, body)
 }

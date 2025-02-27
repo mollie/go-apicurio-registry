@@ -83,7 +83,13 @@ func TestSystemAPI_GetResourceLimitInfo(t *testing.T) {
 func TestSystemAPI_GetUIConfig(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockResponse := models.SystemUIConfigResponse{Ui: models.UIConfig{ContextPath: "/"}}
-		server := setupMockServer(t, http.StatusOK, mockResponse, "/system/uiConfig", http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusOK,
+			mockResponse,
+			"/system/uiConfig",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}

@@ -3,16 +3,17 @@ package apis_test
 import (
 	"context"
 	"errors"
-	"github.com/go-playground/validator/v10"
-	"github.com/mollie/go-apicurio-registry/apis"
-	"github.com/mollie/go-apicurio-registry/client"
-	"github.com/mollie/go-apicurio-registry/models"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/mollie/go-apicurio-registry/apis"
+	"github.com/mollie/go-apicurio-registry/client"
+	"github.com/mollie/go-apicurio-registry/models"
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -26,51 +27,104 @@ const (
 
 func TestVersionsAPI_DeleteArtifactVersion(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		server := setupMockServer(t, http.StatusNoContent, nil, "/groups/test-group/artifacts/test-artifact/versions/1.0.0", http.MethodDelete)
+		server := setupMockServer(
+			t,
+			http.StatusNoContent,
+			nil,
+			"/groups/test-group/artifacts/test-artifact/versions/1.0.0",
+			http.MethodDelete,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		err := api.DeleteArtifactVersion(context.Background(), "test-group", "test-artifact", "1.0.0")
+		err := api.DeleteArtifactVersion(
+			context.Background(),
+			"test-group",
+			"test-artifact",
+			"1.0.0",
+		)
 		assert.NoError(t, err)
 	})
 
 	t.Run("Not Found", func(t *testing.T) {
-		apiError := models.APIError{Status: http.StatusNotFound, Title: "Artifact version not found"}
-		server := setupMockServer(t, http.StatusNotFound, apiError, "/groups/test-group/artifacts/test-artifact/versions/1.0.0", http.MethodDelete)
+		apiError := models.APIError{
+			Status: http.StatusNotFound,
+			Title:  "Artifact version not found",
+		}
+		server := setupMockServer(
+			t,
+			http.StatusNotFound,
+			apiError,
+			"/groups/test-group/artifacts/test-artifact/versions/1.0.0",
+			http.MethodDelete,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		err := api.DeleteArtifactVersion(context.Background(), "test-group", "test-artifact", "1.0.0")
+		err := api.DeleteArtifactVersion(
+			context.Background(),
+			"test-group",
+			"test-artifact",
+			"1.0.0",
+		)
 		assert.Error(t, err)
 		assertAPIError(t, err, http.StatusNotFound, "Artifact version not found")
 	})
 
 	t.Run("Method Not Allowed", func(t *testing.T) {
-		apiError := models.APIError{Status: http.StatusMethodNotAllowed, Title: "Method Not Allowed"}
-		server := setupMockServer(t, http.StatusMethodNotAllowed, apiError, "/groups/test-group/artifacts/test-artifact/versions/1.0.0", http.MethodDelete)
+		apiError := models.APIError{
+			Status: http.StatusMethodNotAllowed,
+			Title:  "Method Not Allowed",
+		}
+		server := setupMockServer(
+			t,
+			http.StatusMethodNotAllowed,
+			apiError,
+			"/groups/test-group/artifacts/test-artifact/versions/1.0.0",
+			http.MethodDelete,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		err := api.DeleteArtifactVersion(context.Background(), "test-group", "test-artifact", "1.0.0")
+		err := api.DeleteArtifactVersion(
+			context.Background(),
+			"test-group",
+			"test-artifact",
+			"1.0.0",
+		)
 		assert.Error(t, err)
 		assertAPIError(t, err, http.StatusMethodNotAllowed, "Method Not Allowed")
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		apiError := models.APIError{Status: http.StatusInternalServerError, Title: "Internal Server Error"}
-		server := setupMockServer(t, http.StatusInternalServerError, apiError, "/groups/test-group/artifacts/test-artifact/versions/1.0.0", http.MethodDelete)
+		apiError := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  "Internal Server Error",
+		}
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			apiError,
+			"/groups/test-group/artifacts/test-artifact/versions/1.0.0",
+			http.MethodDelete,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		err := api.DeleteArtifactVersion(context.Background(), "test-group", "test-artifact", "1.0.0")
+		err := api.DeleteArtifactVersion(
+			context.Background(),
+			"test-group",
+			"test-artifact",
+			"1.0.0",
+		)
 		assert.Error(t, err)
 		assertAPIError(t, err, http.StatusInternalServerError, "Internal Server Error")
 	})
@@ -119,7 +173,13 @@ func TestVersionsAPI_GetArtifactVersionReferences(t *testing.T) {
 		api := apis.NewVersionsAPI(mockClient)
 
 		params := &models.ArtifactVersionReferencesParams{RefType: "INBOUND"}
-		result, err := api.GetArtifactVersionReferences(context.Background(), "test-group", "artifact-1", "1", params)
+		result, err := api.GetArtifactVersionReferences(
+			context.Background(),
+			"test-group",
+			"artifact-1",
+			"1",
+			params,
+		)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -141,7 +201,13 @@ func TestVersionsAPI_GetArtifactVersionReferences(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		result, err := api.GetArtifactVersionReferences(context.Background(), "test-group", "artifact-1", "1", nil)
+		result, err := api.GetArtifactVersionReferences(
+			context.Background(),
+			"test-group",
+			"artifact-1",
+			"1",
+			nil,
+		)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -150,7 +216,10 @@ func TestVersionsAPI_GetArtifactVersionReferences(t *testing.T) {
 	})
 
 	t.Run("Bad Request (400)", func(t *testing.T) {
-		apiError := models.APIError{Status: http.StatusBadRequest, Title: "Invalid refType parameter"}
+		apiError := models.APIError{
+			Status: http.StatusBadRequest,
+			Title:  "Invalid refType parameter",
+		}
 		server := setupMockServer(t, http.StatusBadRequest, apiError,
 			"/groups/test-group/artifacts/artifact-1/versions/1/references",
 			http.MethodGet,
@@ -161,7 +230,13 @@ func TestVersionsAPI_GetArtifactVersionReferences(t *testing.T) {
 		api := apis.NewVersionsAPI(mockClient)
 
 		params := &models.ArtifactVersionReferencesParams{RefType: models.InBound}
-		result, err := api.GetArtifactVersionReferences(context.Background(), "test-group", "artifact-1", "1", params)
+		result, err := api.GetArtifactVersionReferences(
+			context.Background(),
+			"test-group",
+			"artifact-1",
+			"1",
+			params,
+		)
 
 		assert.Error(t, err)
 		assert.Nil(t, result)
@@ -179,7 +254,13 @@ func TestVersionsAPI_GetArtifactVersionReferences(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		result, err := api.GetArtifactVersionReferences(context.Background(), "test-group", "artifact-1", "1", nil)
+		result, err := api.GetArtifactVersionReferences(
+			context.Background(),
+			"test-group",
+			"artifact-1",
+			"1",
+			nil,
+		)
 
 		assert.Error(t, err)
 		assert.Nil(t, result)
@@ -187,7 +268,10 @@ func TestVersionsAPI_GetArtifactVersionReferences(t *testing.T) {
 	})
 
 	t.Run("Internal Server Error (500)", func(t *testing.T) {
-		apiError := models.APIError{Status: http.StatusInternalServerError, Title: "Internal server error"}
+		apiError := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  "Internal server error",
+		}
 		server := setupMockServer(t, http.StatusInternalServerError, apiError,
 			"/groups/test-group/artifacts/artifact-1/versions/1/references",
 			http.MethodGet,
@@ -197,7 +281,13 @@ func TestVersionsAPI_GetArtifactVersionReferences(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		result, err := api.GetArtifactVersionReferences(context.Background(), "test-group", "artifact-1", "1", nil)
+		result, err := api.GetArtifactVersionReferences(
+			context.Background(),
+			"test-group",
+			"artifact-1",
+			"1",
+			nil,
+		)
 
 		assert.Error(t, err)
 		assert.Nil(t, result)
@@ -228,7 +318,13 @@ func TestVersionsAPI_GetArtifactVersionReferences(t *testing.T) {
 		mockClient := &client.Client{}
 		api := apis.NewVersionsAPI(mockClient)
 
-		_, err := api.GetArtifactVersionReferences(context.Background(), "test-group", "artifact-1", "", nil)
+		_, err := api.GetArtifactVersionReferences(
+			context.Background(),
+			"test-group",
+			"artifact-1",
+			"",
+			nil,
+		)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Version Expression")
@@ -238,7 +334,12 @@ func TestVersionsAPI_GetArtifactVersionReferences(t *testing.T) {
 func TestVersionsAPI_GetArtifactVersionComments(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockResponse := []models.ArtifactComment{
-			{CommentID: "12345", Value: "This is a comment.", Owner: "user1", CreatedOn: "2023-07-01T15:22:01Z"},
+			{
+				CommentID: "12345",
+				Value:     "This is a comment.",
+				Owner:     "user1",
+				CreatedOn: "2023-07-01T15:22:01Z",
+			},
 		}
 
 		server := setupMockServer(t, http.StatusOK, mockResponse,
@@ -250,7 +351,12 @@ func TestVersionsAPI_GetArtifactVersionComments(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		result, err := api.GetArtifactVersionComments(context.Background(), "test-group", "artifact-1", "1")
+		result, err := api.GetArtifactVersionComments(
+			context.Background(),
+			"test-group",
+			"artifact-1",
+			"1",
+		)
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Equal(t, 1, len(*result))
@@ -259,7 +365,10 @@ func TestVersionsAPI_GetArtifactVersionComments(t *testing.T) {
 	})
 
 	t.Run("Bad Request (400)", func(t *testing.T) {
-		apiError := models.APIError{Status: http.StatusBadRequest, Title: "Invalid version expression"}
+		apiError := models.APIError{
+			Status: http.StatusBadRequest,
+			Title:  "Invalid version expression",
+		}
 
 		server := setupMockServer(t, http.StatusBadRequest, apiError,
 			"/groups/test-group/artifacts/artifact-1/versions/invalid/comments",
@@ -270,7 +379,12 @@ func TestVersionsAPI_GetArtifactVersionComments(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		result, err := api.GetArtifactVersionComments(context.Background(), "test-group", "artifact-1", "invalid")
+		result, err := api.GetArtifactVersionComments(
+			context.Background(),
+			"test-group",
+			"artifact-1",
+			"invalid",
+		)
 		assert.Error(t, err)
 		assert.Nil(t, result)
 		assertAPIError(t, err, http.StatusBadRequest, "Invalid version expression")
@@ -288,14 +402,22 @@ func TestVersionsAPI_GetArtifactVersionComments(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		result, err := api.GetArtifactVersionComments(context.Background(), "test-group", "non-existent-artifact", "1")
+		result, err := api.GetArtifactVersionComments(
+			context.Background(),
+			"test-group",
+			"non-existent-artifact",
+			"1",
+		)
 		assert.Error(t, err)
 		assert.Nil(t, result)
 		assertAPIError(t, err, http.StatusNotFound, "Artifact not found")
 	})
 
 	t.Run("Internal Server Error (500)", func(t *testing.T) {
-		apiError := models.APIError{Status: http.StatusInternalServerError, Title: "Internal server error"}
+		apiError := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  "Internal server error",
+		}
 
 		server := setupMockServer(t, http.StatusInternalServerError, apiError,
 			"/groups/test-group/artifacts/artifact-1/versions/1/comments",
@@ -306,7 +428,12 @@ func TestVersionsAPI_GetArtifactVersionComments(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		result, err := api.GetArtifactVersionComments(context.Background(), "test-group", "artifact-1", "1")
+		result, err := api.GetArtifactVersionComments(
+			context.Background(),
+			"test-group",
+			"artifact-1",
+			"1",
+		)
 		assert.Error(t, err)
 		assert.Nil(t, result)
 		assertAPIError(t, err, http.StatusInternalServerError, "Internal server error")
@@ -334,7 +461,12 @@ func TestVersionsAPI_GetArtifactVersionComments(t *testing.T) {
 		mockClient := &client.Client{}
 		api := apis.NewVersionsAPI(mockClient)
 
-		_, err := api.GetArtifactVersionComments(context.Background(), "test-group", "artifact-1", "")
+		_, err := api.GetArtifactVersionComments(
+			context.Background(),
+			"test-group",
+			"artifact-1",
+			"",
+		)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Version Expression")
 	})
@@ -359,7 +491,13 @@ func TestVersionsAPI_AddArtifactVersionComment(t *testing.T) {
 		api := apis.NewVersionsAPI(mockClient)
 
 		comment := "This is a new comment on an artifact version."
-		result, err := api.AddArtifactVersionComment(context.Background(), "my-group", "example-artifact", "v1", comment)
+		result, err := api.AddArtifactVersionComment(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"v1",
+			comment,
+		)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -379,7 +517,13 @@ func TestVersionsAPI_AddArtifactVersionComment(t *testing.T) {
 		api := apis.NewVersionsAPI(mockClient)
 
 		comment := "" // Invalid input
-		result, err := api.AddArtifactVersionComment(context.Background(), "my-group", "example-artifact", "v1", comment)
+		result, err := api.AddArtifactVersionComment(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"v1",
+			comment,
+		)
 
 		assert.Error(t, err)
 		assert.Nil(t, result)
@@ -399,7 +543,13 @@ func TestVersionsAPI_AddArtifactVersionComment(t *testing.T) {
 		api := apis.NewVersionsAPI(mockClient)
 
 		comment := "This is a new comment"
-		result, err := api.AddArtifactVersionComment(context.Background(), "invalid-group", "example-artifact", "v1", comment)
+		result, err := api.AddArtifactVersionComment(
+			context.Background(),
+			"invalid-group",
+			"example-artifact",
+			"v1",
+			comment,
+		)
 
 		assert.Error(t, err)
 		assert.Nil(t, result)
@@ -407,7 +557,10 @@ func TestVersionsAPI_AddArtifactVersionComment(t *testing.T) {
 	})
 
 	t.Run("Internal Server Error (500)", func(t *testing.T) {
-		apiError := models.APIError{Status: http.StatusInternalServerError, Title: "Internal server error"}
+		apiError := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  "Internal server error",
+		}
 
 		server := setupMockServer(t, http.StatusInternalServerError, apiError,
 			"/groups/my-group/artifacts/example-artifact/versions/v1/comments",
@@ -419,7 +572,13 @@ func TestVersionsAPI_AddArtifactVersionComment(t *testing.T) {
 		api := apis.NewVersionsAPI(mockClient)
 
 		comment := "This is a new comment"
-		result, err := api.AddArtifactVersionComment(context.Background(), "my-group", "example-artifact", "v1", comment)
+		result, err := api.AddArtifactVersionComment(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"v1",
+			comment,
+		)
 
 		assert.Error(t, err)
 		assert.Nil(t, result)
@@ -431,7 +590,13 @@ func TestVersionsAPI_AddArtifactVersionComment(t *testing.T) {
 		api := apis.NewVersionsAPI(mockClient)
 
 		comment := "Valid comment"
-		result, err := api.AddArtifactVersionComment(context.Background(), "", "example-artifact", "v1", comment)
+		result, err := api.AddArtifactVersionComment(
+			context.Background(),
+			"",
+			"example-artifact",
+			"v1",
+			comment,
+		)
 
 		assert.Error(t, err)
 		assert.Nil(t, result)
@@ -443,7 +608,13 @@ func TestVersionsAPI_AddArtifactVersionComment(t *testing.T) {
 		api := apis.NewVersionsAPI(mockClient)
 
 		comment := "Valid comment"
-		result, err := api.AddArtifactVersionComment(context.Background(), "my-group", "", "v1", comment)
+		result, err := api.AddArtifactVersionComment(
+			context.Background(),
+			"my-group",
+			"",
+			"v1",
+			comment,
+		)
 
 		assert.Error(t, err)
 		assert.Nil(t, result)
@@ -455,7 +626,13 @@ func TestVersionsAPI_AddArtifactVersionComment(t *testing.T) {
 		api := apis.NewVersionsAPI(mockClient)
 
 		comment := "Valid comment"
-		result, err := api.AddArtifactVersionComment(context.Background(), "my-group", "example-artifact", "", comment)
+		result, err := api.AddArtifactVersionComment(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"",
+			comment,
+		)
 
 		assert.Error(t, err)
 		assert.Nil(t, result)
@@ -474,7 +651,14 @@ func TestVersionsAPI_UpdateArtifactVersionComment(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		err := api.UpdateArtifactVersionComment(context.Background(), "my-group", "example-artifact", "v1", "12345", "Updated comment value")
+		err := api.UpdateArtifactVersionComment(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"v1",
+			"12345",
+			"Updated comment value",
+		)
 
 		assert.NoError(t, err)
 	})
@@ -491,7 +675,14 @@ func TestVersionsAPI_UpdateArtifactVersionComment(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		err := api.UpdateArtifactVersionComment(context.Background(), "my-group", "example-artifact", "v1", "12345", "")
+		err := api.UpdateArtifactVersionComment(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"v1",
+			"12345",
+			"",
+		)
 
 		assert.Error(t, err)
 		assertAPIError(t, err, http.StatusBadRequest, "Invalid input")
@@ -509,14 +700,24 @@ func TestVersionsAPI_UpdateArtifactVersionComment(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		err := api.UpdateArtifactVersionComment(context.Background(), "my-group", "example-artifact", "v1", "invalid-id", "Updated comment")
+		err := api.UpdateArtifactVersionComment(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"v1",
+			"invalid-id",
+			"Updated comment",
+		)
 
 		assert.Error(t, err)
 		assertAPIError(t, err, http.StatusNotFound, "Comment not found")
 	})
 
 	t.Run("Internal Server Error (500)", func(t *testing.T) {
-		apiError := models.APIError{Status: http.StatusInternalServerError, Title: "Internal server error"}
+		apiError := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  "Internal server error",
+		}
 
 		server := setupMockServer(t, http.StatusInternalServerError, apiError,
 			"/groups/my-group/artifacts/example-artifact/versions/v1/comments/12345",
@@ -527,7 +728,14 @@ func TestVersionsAPI_UpdateArtifactVersionComment(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		err := api.UpdateArtifactVersionComment(context.Background(), "my-group", "example-artifact", "v1", "12345", "Updated comment")
+		err := api.UpdateArtifactVersionComment(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"v1",
+			"12345",
+			"Updated comment",
+		)
 
 		assert.Error(t, err)
 		assertAPIError(t, err, http.StatusInternalServerError, "Internal server error")
@@ -537,7 +745,14 @@ func TestVersionsAPI_UpdateArtifactVersionComment(t *testing.T) {
 		mockClient := &client.Client{}
 		api := apis.NewVersionsAPI(mockClient)
 
-		err := api.UpdateArtifactVersionComment(context.Background(), "", "example-artifact", "v1", "12345", "Updated comment")
+		err := api.UpdateArtifactVersionComment(
+			context.Background(),
+			"",
+			"example-artifact",
+			"v1",
+			"12345",
+			"Updated comment",
+		)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Group ID")
@@ -547,7 +762,14 @@ func TestVersionsAPI_UpdateArtifactVersionComment(t *testing.T) {
 		mockClient := &client.Client{}
 		api := apis.NewVersionsAPI(mockClient)
 
-		err := api.UpdateArtifactVersionComment(context.Background(), "my-group", "", "v1", "12345", "Updated comment")
+		err := api.UpdateArtifactVersionComment(
+			context.Background(),
+			"my-group",
+			"",
+			"v1",
+			"12345",
+			"Updated comment",
+		)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Artifact ID")
@@ -557,7 +779,14 @@ func TestVersionsAPI_UpdateArtifactVersionComment(t *testing.T) {
 		mockClient := &client.Client{}
 		api := apis.NewVersionsAPI(mockClient)
 
-		err := api.UpdateArtifactVersionComment(context.Background(), "my-group", "example-artifact", "", "12345", "Updated comment")
+		err := api.UpdateArtifactVersionComment(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"",
+			"12345",
+			"Updated comment",
+		)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Version Expression")
@@ -575,7 +804,13 @@ func TestVersionsAPI_DeleteArtifactVersionComment(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		err := api.DeleteArtifactVersionComment(context.Background(), "my-group", "example-artifact", "v1", "12345")
+		err := api.DeleteArtifactVersionComment(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"v1",
+			"12345",
+		)
 		assert.NoError(t, err)
 	})
 
@@ -591,7 +826,13 @@ func TestVersionsAPI_DeleteArtifactVersionComment(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		err := api.DeleteArtifactVersionComment(context.Background(), "my-group", "example-artifact", "v1", "12345")
+		err := api.DeleteArtifactVersionComment(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"v1",
+			"12345",
+		)
 		assert.Error(t, err)
 		assertAPIError(t, err, http.StatusBadRequest, "Invalid input")
 	})
@@ -608,13 +849,22 @@ func TestVersionsAPI_DeleteArtifactVersionComment(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		err := api.DeleteArtifactVersionComment(context.Background(), "my-group", "example-artifact", "v1", "invalid-id")
+		err := api.DeleteArtifactVersionComment(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"v1",
+			"invalid-id",
+		)
 		assert.Error(t, err)
 		assertAPIError(t, err, http.StatusNotFound, "Comment not found")
 	})
 
 	t.Run("Internal Server Error (500)", func(t *testing.T) {
-		apiError := models.APIError{Status: http.StatusInternalServerError, Title: "Internal server error"}
+		apiError := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  "Internal server error",
+		}
 
 		server := setupMockServer(t, http.StatusInternalServerError, apiError,
 			"/groups/my-group/artifacts/example-artifact/versions/v1/comments/12345",
@@ -625,7 +875,13 @@ func TestVersionsAPI_DeleteArtifactVersionComment(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		err := api.DeleteArtifactVersionComment(context.Background(), "my-group", "example-artifact", "v1", "12345")
+		err := api.DeleteArtifactVersionComment(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"v1",
+			"12345",
+		)
 		assert.Error(t, err)
 		assertAPIError(t, err, http.StatusInternalServerError, "Internal server error")
 	})
@@ -635,7 +891,13 @@ func TestVersionsAPI_DeleteArtifactVersionComment(t *testing.T) {
 		mockClient := &client.Client{}
 		api := apis.NewVersionsAPI(mockClient)
 
-		err := api.DeleteArtifactVersionComment(context.Background(), "", "example-artifact", "v1", "12345")
+		err := api.DeleteArtifactVersionComment(
+			context.Background(),
+			"",
+			"example-artifact",
+			"v1",
+			"12345",
+		)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Group ID")
 	})
@@ -653,7 +915,13 @@ func TestVersionsAPI_DeleteArtifactVersionComment(t *testing.T) {
 		mockClient := &client.Client{}
 		api := apis.NewVersionsAPI(mockClient)
 
-		err := api.DeleteArtifactVersionComment(context.Background(), "my-group", "example-artifact", "", "12345")
+		err := api.DeleteArtifactVersionComment(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"",
+			"12345",
+		)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Version Expression")
 	})
@@ -662,7 +930,13 @@ func TestVersionsAPI_DeleteArtifactVersionComment(t *testing.T) {
 		mockClient := &client.Client{}
 		api := apis.NewVersionsAPI(mockClient)
 
-		err := api.DeleteArtifactVersionComment(context.Background(), "my-group", "example-artifact", "v1", "")
+		err := api.DeleteArtifactVersionComment(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"v1",
+			"",
+		)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Comment ID")
 	})
@@ -705,7 +979,12 @@ func TestVersionsAPI_ListArtifactVersions(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		versions, err := api.ListArtifactVersions(context.Background(), "my-group", "example-artifact", nil)
+		versions, err := api.ListArtifactVersions(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			nil,
+		)
 		assert.NoError(t, err)
 		assert.NotNil(t, versions)
 		assert.Equal(t, 2, len(versions))
@@ -722,7 +1001,12 @@ func TestVersionsAPI_ListArtifactVersions(t *testing.T) {
 		mockClient := &client.Client{BaseURL: "http://example.com", HTTPClient: &http.Client{}}
 		api := apis.NewVersionsAPI(mockClient)
 
-		versions, err := api.ListArtifactVersions(context.Background(), "my-group", "example-artifact", params)
+		versions, err := api.ListArtifactVersions(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			params,
+		)
 		assert.Error(t, err)
 		assert.Nil(t, versions)
 
@@ -750,14 +1034,22 @@ func TestVersionsAPI_ListArtifactVersions(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		versions, err := api.ListArtifactVersions(context.Background(), "my-group", "example-artifact", nil)
+		versions, err := api.ListArtifactVersions(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			nil,
+		)
 		assert.Error(t, err)
 		assert.Nil(t, versions)
 		assertAPIError(t, err, http.StatusNotFound, "Artifact not found")
 	})
 
 	t.Run("Internal Server Error (500)", func(t *testing.T) {
-		apiError := models.APIError{Status: http.StatusInternalServerError, Title: "Internal server error"}
+		apiError := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  "Internal server error",
+		}
 
 		server := setupMockServer(t, http.StatusInternalServerError, apiError,
 			"/groups/my-group/artifacts/example-artifact/versions", http.MethodGet)
@@ -766,7 +1058,12 @@ func TestVersionsAPI_ListArtifactVersions(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		versions, err := api.ListArtifactVersions(context.Background(), "my-group", "example-artifact", nil)
+		versions, err := api.ListArtifactVersions(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			nil,
+		)
 		assert.Error(t, err)
 		assert.Nil(t, versions)
 		assertAPIError(t, err, http.StatusInternalServerError, "Internal server error")
@@ -835,7 +1132,13 @@ func TestVersionsAPI_CreateArtifactVersion(t *testing.T) {
 			IsDraft:     false,
 		}
 
-		result, err := api.CreateArtifactVersion(context.Background(), "my-group", "example-artifact", createRequest, false)
+		result, err := api.CreateArtifactVersion(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			createRequest,
+			false,
+		)
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Equal(t, "1.0.0", result.Version)
@@ -855,7 +1158,13 @@ func TestVersionsAPI_CreateArtifactVersion(t *testing.T) {
 		api := apis.NewVersionsAPI(mockClient)
 
 		createRequest := &models.CreateVersionRequest{}
-		result, err := api.CreateArtifactVersion(context.Background(), "my-group", "example-artifact", createRequest, false)
+		result, err := api.CreateArtifactVersion(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			createRequest,
+			false,
+		)
 
 		assert.Error(t, err)
 		assert.Nil(t, result)
@@ -880,7 +1189,13 @@ func TestVersionsAPI_CreateArtifactVersion(t *testing.T) {
 			},
 		}
 
-		result, err := api.CreateArtifactVersion(context.Background(), "my-group", "example-artifact", createRequest, false)
+		result, err := api.CreateArtifactVersion(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			createRequest,
+			false,
+		)
 		assert.Error(t, err)
 		assert.Nil(t, result)
 		assertAPIError(t, err, http.StatusNotFound, "Artifact not found")
@@ -904,14 +1219,23 @@ func TestVersionsAPI_CreateArtifactVersion(t *testing.T) {
 			},
 		}
 
-		result, err := api.CreateArtifactVersion(context.Background(), "my-group", "example-artifact", createRequest, false)
+		result, err := api.CreateArtifactVersion(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			createRequest,
+			false,
+		)
 		assert.Error(t, err)
 		assert.Nil(t, result)
 		assertAPIError(t, err, http.StatusConflict, "Conflict")
 	})
 
 	t.Run("InternalServerError", func(t *testing.T) {
-		apiError := models.APIError{Status: http.StatusInternalServerError, Title: "Internal server error"}
+		apiError := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  "Internal server error",
+		}
 
 		server := setupMockServer(t, http.StatusInternalServerError, apiError,
 			"/groups/my-group/artifacts/example-artifact/versions", http.MethodPost)
@@ -928,7 +1252,13 @@ func TestVersionsAPI_CreateArtifactVersion(t *testing.T) {
 			},
 		}
 
-		result, err := api.CreateArtifactVersion(context.Background(), "my-group", "example-artifact", createRequest, false)
+		result, err := api.CreateArtifactVersion(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			createRequest,
+			false,
+		)
 		assert.Error(t, err)
 		assert.Nil(t, result)
 		assertAPIError(t, err, http.StatusInternalServerError, "Internal server error")
@@ -939,7 +1269,13 @@ func TestVersionsAPI_CreateArtifactVersion(t *testing.T) {
 		mockClient := &client.Client{}
 		api := apis.NewVersionsAPI(mockClient)
 
-		result, err := api.CreateArtifactVersion(context.Background(), "", "example-artifact", nil, false)
+		result, err := api.CreateArtifactVersion(
+			context.Background(),
+			"",
+			"example-artifact",
+			nil,
+			false,
+		)
 		assert.Error(t, err)
 		assert.Nil(t, result)
 		assert.Contains(t, err.Error(), "Group ID")
@@ -961,7 +1297,11 @@ func TestVersionsAPI_GetArtifactVersionContent(t *testing.T) {
 		mockResponse := `{"a": "1"}`
 
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Equal(t, "/groups/my-group/artifacts/example-artifact/versions/1.0.0/content", r.URL.Path)
+			assert.Equal(
+				t,
+				"/groups/my-group/artifacts/example-artifact/versions/1.0.0/content",
+				r.URL.Path,
+			)
 			assert.Equal(t, http.MethodGet, r.Method)
 			// Write the response
 			w.Header().Set("X-Registry-ArtifactType", string(models.Json))
@@ -975,7 +1315,13 @@ func TestVersionsAPI_GetArtifactVersionContent(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		content, err := api.GetArtifactVersionContent(context.Background(), "my-group", "example-artifact", "1.0.0", nil)
+		content, err := api.GetArtifactVersionContent(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"1.0.0",
+			nil,
+		)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, content)
 		assert.Equal(t, `{"a": "1"}`, content.Content)
@@ -991,7 +1337,13 @@ func TestVersionsAPI_GetArtifactVersionContent(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		result, err := api.GetArtifactVersionContent(context.Background(), "my-group", "example-artifact", "1.0.0", nil)
+		result, err := api.GetArtifactVersionContent(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"1.0.0",
+			nil,
+		)
 
 		assert.Error(t, err)
 		assert.Nil(t, result)
@@ -1008,7 +1360,13 @@ func TestVersionsAPI_GetArtifactVersionContent(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		result, err := api.GetArtifactVersionContent(context.Background(), "my-group", "example-artifact", "1.0.0", nil)
+		result, err := api.GetArtifactVersionContent(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"1.0.0",
+			nil,
+		)
 
 		assert.Error(t, err)
 		assert.Nil(t, result)
@@ -1016,16 +1374,31 @@ func TestVersionsAPI_GetArtifactVersionContent(t *testing.T) {
 	})
 
 	t.Run("InternalServerError", func(t *testing.T) {
-		apiError := models.APIError{Status: http.StatusInternalServerError, Title: "Internal server error"}
+		apiError := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  "Internal server error",
+		}
 		expectedURL := "/groups/my-group/artifacts/example-artifact/versions/1.0.0/content"
 
-		server := setupMockServer(t, http.StatusInternalServerError, apiError, expectedURL, http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			apiError,
+			expectedURL,
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		result, err := api.GetArtifactVersionContent(context.Background(), "my-group", "example-artifact", "1.0.0", nil)
+		result, err := api.GetArtifactVersionContent(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"1.0.0",
+			nil,
+		)
 
 		assert.Error(t, err)
 		assert.Nil(t, result)
@@ -1037,7 +1410,13 @@ func TestVersionsAPI_GetArtifactVersionContent(t *testing.T) {
 		mockClient := &client.Client{}
 		api := apis.NewVersionsAPI(mockClient)
 
-		result, err := api.GetArtifactVersionContent(context.Background(), "", "example-artifact", "1.0.0", nil)
+		result, err := api.GetArtifactVersionContent(
+			context.Background(),
+			"",
+			"example-artifact",
+			"1.0.0",
+			nil,
+		)
 
 		assert.Error(t, err)
 		assert.Nil(t, result)
@@ -1048,7 +1427,13 @@ func TestVersionsAPI_GetArtifactVersionContent(t *testing.T) {
 		mockClient := &client.Client{}
 		api := apis.NewVersionsAPI(mockClient)
 
-		result, err := api.GetArtifactVersionContent(context.Background(), "my-group", "", "1.0.0", nil)
+		result, err := api.GetArtifactVersionContent(
+			context.Background(),
+			"my-group",
+			"",
+			"1.0.0",
+			nil,
+		)
 
 		assert.Error(t, err)
 		assert.Nil(t, result)
@@ -1059,7 +1444,13 @@ func TestVersionsAPI_GetArtifactVersionContent(t *testing.T) {
 		mockClient := &client.Client{}
 		api := apis.NewVersionsAPI(mockClient)
 
-		result, err := api.GetArtifactVersionContent(context.Background(), "my-group", "example-artifact", "", nil)
+		result, err := api.GetArtifactVersionContent(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"",
+			nil,
+		)
 
 		assert.Error(t, err)
 		assert.Nil(t, result)
@@ -1082,7 +1473,13 @@ func TestVersionsAPI_UpdateArtifactVersionContent(t *testing.T) {
 			ContentType: "application/json",
 		}
 
-		err := api.UpdateArtifactVersionContent(context.Background(), "my-group", "example-artifact", "1.0.0", content)
+		err := api.UpdateArtifactVersionContent(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"1.0.0",
+			content,
+		)
 
 		assert.NoError(t, err)
 	})
@@ -1102,7 +1499,13 @@ func TestVersionsAPI_UpdateArtifactVersionContent(t *testing.T) {
 			ContentType: "application/json",
 		}
 
-		err := api.UpdateArtifactVersionContent(context.Background(), "my-group", "example-artifact", "1.0.0", content)
+		err := api.UpdateArtifactVersionContent(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"1.0.0",
+			content,
+		)
 
 		assert.Error(t, err)
 		assertAPIError(t, err, http.StatusBadRequest, "Invalid input")
@@ -1123,7 +1526,13 @@ func TestVersionsAPI_UpdateArtifactVersionContent(t *testing.T) {
 			ContentType: "application/json",
 		}
 
-		err := api.UpdateArtifactVersionContent(context.Background(), "my-group", "example-artifact", "1.0.0", content)
+		err := api.UpdateArtifactVersionContent(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"1.0.0",
+			content,
+		)
 
 		assert.Error(t, err)
 		assertAPIError(t, err, http.StatusNotFound, "Artifact not found")
@@ -1144,17 +1553,32 @@ func TestVersionsAPI_UpdateArtifactVersionContent(t *testing.T) {
 			ContentType: "application/json",
 		}
 
-		err := api.UpdateArtifactVersionContent(context.Background(), "my-group", "example-artifact", "1.0.0", content)
+		err := api.UpdateArtifactVersionContent(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"1.0.0",
+			content,
+		)
 
 		assert.Error(t, err)
 		assertAPIError(t, err, http.StatusConflict, "Conflict")
 	})
 
 	t.Run("InternalServerError", func(t *testing.T) {
-		apiError := models.APIError{Status: http.StatusInternalServerError, Title: "Internal server error"}
+		apiError := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  "Internal server error",
+		}
 		expectedURL := "/groups/my-group/artifacts/example-artifact/versions/1.0.0/content"
 
-		server := setupMockServer(t, http.StatusInternalServerError, apiError, expectedURL, http.MethodPut)
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			apiError,
+			expectedURL,
+			http.MethodPut,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -1165,7 +1589,13 @@ func TestVersionsAPI_UpdateArtifactVersionContent(t *testing.T) {
 			ContentType: "application/json",
 		}
 
-		err := api.UpdateArtifactVersionContent(context.Background(), "my-group", "example-artifact", "1.0.0", content)
+		err := api.UpdateArtifactVersionContent(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"1.0.0",
+			content,
+		)
 
 		assert.Error(t, err)
 		assertAPIError(t, err, http.StatusInternalServerError, "Internal server error")
@@ -1181,7 +1611,13 @@ func TestVersionsAPI_UpdateArtifactVersionContent(t *testing.T) {
 			ContentType: "application/json",
 		}
 
-		err := api.UpdateArtifactVersionContent(context.Background(), "", "example-artifact", "1.0.0", content)
+		err := api.UpdateArtifactVersionContent(
+			context.Background(),
+			"",
+			"example-artifact",
+			"1.0.0",
+			content,
+		)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Group ID")
@@ -1196,7 +1632,13 @@ func TestVersionsAPI_UpdateArtifactVersionContent(t *testing.T) {
 			ContentType: "application/json",
 		}
 
-		err := api.UpdateArtifactVersionContent(context.Background(), "my-group", "", "1.0.0", content)
+		err := api.UpdateArtifactVersionContent(
+			context.Background(),
+			"my-group",
+			"",
+			"1.0.0",
+			content,
+		)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Artifact ID")
@@ -1211,7 +1653,13 @@ func TestVersionsAPI_UpdateArtifactVersionContent(t *testing.T) {
 			ContentType: "application/json",
 		}
 
-		err := api.UpdateArtifactVersionContent(context.Background(), "my-group", "example-artifact", "", content)
+		err := api.UpdateArtifactVersionContent(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"",
+			content,
+		)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Version Expression")
@@ -1248,7 +1696,13 @@ func TestVersionsAPI_SearchForArtifactVersions(t *testing.T) {
 			},
 		}
 
-		server := setupMockServer(t, http.StatusOK, mockResponse, "/search/versions", http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusOK,
+			mockResponse,
+			"/search/versions",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -1293,7 +1747,12 @@ func TestVersionsAPI_SearchForArtifactVersions(t *testing.T) {
 			for _, fieldErr := range validationErrs {
 				foundErrors[fieldErr.StructField()] = fieldErr.Tag()
 			}
-			assert.Equal(t, "gte", foundErrors["Limit"], "Expected Limit to fail with 'gte' validation tag")
+			assert.Equal(
+				t,
+				"gte",
+				foundErrors["Limit"],
+				"Expected Limit to fail with 'gte' validation tag",
+			)
 		} else {
 			t.Fatalf("Expected validation error, got: %v", err)
 		}
@@ -1305,7 +1764,13 @@ func TestVersionsAPI_SearchForArtifactVersions(t *testing.T) {
 			Title:  "Internal server error",
 		}
 
-		server := setupMockServer(t, http.StatusInternalServerError, mockError, "/search/versions", http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			mockError,
+			"/search/versions",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -1357,7 +1822,13 @@ func TestVersionsAPI_SearchForArtifactVersionByContent(t *testing.T) {
 			},
 		}
 
-		server := setupMockServer(t, http.StatusOK, mockResponse, "/search/versions", http.MethodPost)
+		server := setupMockServer(
+			t,
+			http.StatusOK,
+			mockResponse,
+			"/search/versions",
+			http.MethodPost,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -1366,7 +1837,11 @@ func TestVersionsAPI_SearchForArtifactVersionByContent(t *testing.T) {
 		params := &models.SearchVersionByContentParams{Limit: 10, Offset: 0}
 		content := `{"key": "value"}`
 
-		versions, err := api.SearchForArtifactVersionByContent(context.Background(), content, params)
+		versions, err := api.SearchForArtifactVersionByContent(
+			context.Background(),
+			content,
+			params,
+		)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, versions)
@@ -1381,7 +1856,13 @@ func TestVersionsAPI_SearchForArtifactVersionByContent(t *testing.T) {
 			Title:  "Content cannot be empty",
 		}
 
-		server := setupMockServer(t, http.StatusBadRequest, mockError, "/search/versions", http.MethodPost)
+		server := setupMockServer(
+			t,
+			http.StatusBadRequest,
+			mockError,
+			"/search/versions",
+			http.MethodPost,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -1400,7 +1881,13 @@ func TestVersionsAPI_SearchForArtifactVersionByContent(t *testing.T) {
 			Title:  "Internal server error",
 		}
 
-		server := setupMockServer(t, http.StatusInternalServerError, mockError, "/search/versions", http.MethodPost)
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			mockError,
+			"/search/versions",
+			http.MethodPost,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -1426,7 +1913,11 @@ func TestVersionsAPI_SearchForArtifactVersionByContent(t *testing.T) {
 		}
 		content := `{"key": "value"}`
 
-		versions, err := api.SearchForArtifactVersionByContent(context.Background(), content, params)
+		versions, err := api.SearchForArtifactVersionByContent(
+			context.Background(),
+			content,
+			params,
+		)
 
 		assert.Error(t, err)
 		assert.Nil(t, versions)
@@ -1438,8 +1929,18 @@ func TestVersionsAPI_SearchForArtifactVersionByContent(t *testing.T) {
 				foundErrors[fieldErr.StructField()] = fieldErr.Tag()
 			}
 
-			assert.Equal(t, "gte", foundErrors["Offset"], "Expected Offset to fail with 'gte' validation tag")
-			assert.Equal(t, "gte", foundErrors["Limit"], "Expected Limit to fail with 'gte' validation tag")
+			assert.Equal(
+				t,
+				"gte",
+				foundErrors["Offset"],
+				"Expected Offset to fail with 'gte' validation tag",
+			)
+			assert.Equal(
+				t,
+				"gte",
+				foundErrors["Limit"],
+				"Expected Limit to fail with 'gte' validation tag",
+			)
 		} else {
 			t.Fatalf("Expected validation error, got: %v", err)
 		}
@@ -1452,13 +1953,24 @@ func TestVersionsAPI_GetArtifactVersionState(t *testing.T) {
 			State: models.StateEnabled,
 		}
 
-		server := setupMockServer(t, http.StatusOK, mockResponse, "/groups/my-group/artifacts/example-artifact/versions/1.0/state", http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusOK,
+			mockResponse,
+			"/groups/my-group/artifacts/example-artifact/versions/1.0/state",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		state, err := api.GetArtifactVersionState(context.Background(), "my-group", "example-artifact", "1.0")
+		state, err := api.GetArtifactVersionState(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"1.0",
+		)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, state)
@@ -1471,13 +1983,24 @@ func TestVersionsAPI_GetArtifactVersionState(t *testing.T) {
 			Title:  "Artifact version not found",
 		}
 
-		server := setupMockServer(t, http.StatusNotFound, mockError, "/groups/my-group/artifacts/example-artifact/versions/1.0/state", http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusNotFound,
+			mockError,
+			"/groups/my-group/artifacts/example-artifact/versions/1.0/state",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		state, err := api.GetArtifactVersionState(context.Background(), "my-group", "example-artifact", "1.0")
+		state, err := api.GetArtifactVersionState(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"1.0",
+		)
 
 		assert.Error(t, err)
 		assert.Nil(t, state)
@@ -1490,13 +2013,24 @@ func TestVersionsAPI_GetArtifactVersionState(t *testing.T) {
 			Title:  "Internal server error",
 		}
 
-		server := setupMockServer(t, http.StatusInternalServerError, mockError, "/groups/my-group/artifacts/example-artifact/versions/1.0/state", http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			mockError,
+			"/groups/my-group/artifacts/example-artifact/versions/1.0/state",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		state, err := api.GetArtifactVersionState(context.Background(), "my-group", "example-artifact", "1.0")
+		state, err := api.GetArtifactVersionState(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"1.0",
+		)
 
 		assert.Error(t, err)
 		assert.Nil(t, state)
@@ -1507,7 +2041,12 @@ func TestVersionsAPI_GetArtifactVersionState(t *testing.T) {
 		mockClient := &client.Client{BaseURL: "http://example.com", HTTPClient: &http.Client{}}
 		api := apis.NewVersionsAPI(mockClient)
 
-		state, err := api.GetArtifactVersionState(context.Background(), "", "example-artifact", "1.0")
+		state, err := api.GetArtifactVersionState(
+			context.Background(),
+			"",
+			"example-artifact",
+			"1.0",
+		)
 
 		assert.Error(t, err)
 		assert.Nil(t, state)
@@ -1529,7 +2068,12 @@ func TestVersionsAPI_GetArtifactVersionState(t *testing.T) {
 		mockClient := &client.Client{BaseURL: "http://example.com", HTTPClient: &http.Client{}}
 		api := apis.NewVersionsAPI(mockClient)
 
-		state, err := api.GetArtifactVersionState(context.Background(), "my-group", "example-artifact", "")
+		state, err := api.GetArtifactVersionState(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"",
+		)
 
 		assert.Error(t, err)
 		assert.Nil(t, state)
@@ -1546,7 +2090,14 @@ func TestVersionsAPI_UpdateArtifactVersionState(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		err := api.UpdateArtifactVersionState(context.Background(), "my-group", "example-artifact", "1.0", models.StateEnabled, false)
+		err := api.UpdateArtifactVersionState(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"1.0",
+			models.StateEnabled,
+			false,
+		)
 		assert.NoError(t, err)
 	})
 
@@ -1559,7 +2110,14 @@ func TestVersionsAPI_UpdateArtifactVersionState(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		err := api.UpdateArtifactVersionState(context.Background(), "my-group", "example-artifact", "1.0", "INVALID_STATE", false)
+		err := api.UpdateArtifactVersionState(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"1.0",
+			"INVALID_STATE",
+			false,
+		)
 
 		assert.Error(t, err)
 		assertAPIError(t, err, 400, "Invalid state")
@@ -1574,7 +2132,14 @@ func TestVersionsAPI_UpdateArtifactVersionState(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		err := api.UpdateArtifactVersionState(context.Background(), "my-group", "example-artifact", "1.0", models.StateDraft, false)
+		err := api.UpdateArtifactVersionState(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"1.0",
+			models.StateDraft,
+			false,
+		)
 
 		assert.Error(t, err)
 		assertAPIError(t, err, 409, "Conflict")
@@ -1589,7 +2154,14 @@ func TestVersionsAPI_UpdateArtifactVersionState(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewVersionsAPI(mockClient)
 
-		err := api.UpdateArtifactVersionState(context.Background(), "my-group", "example-artifact", "1.0", models.StateEnabled, false)
+		err := api.UpdateArtifactVersionState(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"1.0",
+			models.StateEnabled,
+			false,
+		)
 
 		assert.Error(t, err)
 		assertAPIError(t, err, 500, "Internal server error")
@@ -1599,7 +2171,14 @@ func TestVersionsAPI_UpdateArtifactVersionState(t *testing.T) {
 		mockClient := &client.Client{BaseURL: "http://example.com", HTTPClient: &http.Client{}}
 		api := apis.NewVersionsAPI(mockClient)
 
-		err := api.UpdateArtifactVersionState(context.Background(), "", "example-artifact", "1.0", models.StateEnabled, false)
+		err := api.UpdateArtifactVersionState(
+			context.Background(),
+			"",
+			"example-artifact",
+			"1.0",
+			models.StateEnabled,
+			false,
+		)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Group ID")
 	})
@@ -1608,7 +2187,14 @@ func TestVersionsAPI_UpdateArtifactVersionState(t *testing.T) {
 		mockClient := &client.Client{BaseURL: "http://example.com", HTTPClient: &http.Client{}}
 		api := apis.NewVersionsAPI(mockClient)
 
-		err := api.UpdateArtifactVersionState(context.Background(), "my-group", "", "1.0", models.StateEnabled, false)
+		err := api.UpdateArtifactVersionState(
+			context.Background(),
+			"my-group",
+			"",
+			"1.0",
+			models.StateEnabled,
+			false,
+		)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Artifact ID")
 	})
@@ -1617,7 +2203,14 @@ func TestVersionsAPI_UpdateArtifactVersionState(t *testing.T) {
 		mockClient := &client.Client{BaseURL: "http://example.com", HTTPClient: &http.Client{}}
 		api := apis.NewVersionsAPI(mockClient)
 
-		err := api.UpdateArtifactVersionState(context.Background(), "my-group", "example-artifact", "", models.StateEnabled, false)
+		err := api.UpdateArtifactVersionState(
+			context.Background(),
+			"my-group",
+			"example-artifact",
+			"",
+			models.StateEnabled,
+			false,
+		)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Version Expression")
 	})
@@ -1674,7 +2267,12 @@ func TestVersionsAPI_InputValidation(t *testing.T) {
 		mockClient := &client.Client{}
 		api := apis.NewVersionsAPI(mockClient)
 
-		err := api.DeleteArtifactVersion(context.Background(), invalidGroupID, "test-artifact", "1.0.0")
+		err := api.DeleteArtifactVersion(
+			context.Background(),
+			invalidGroupID,
+			"test-artifact",
+			"1.0.0",
+		)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Group ID")
 	})
@@ -1684,7 +2282,12 @@ func TestVersionsAPI_InputValidation(t *testing.T) {
 		mockClient := &client.Client{}
 		api := apis.NewVersionsAPI(mockClient)
 
-		err := api.DeleteArtifactVersion(context.Background(), "test-group", invalidArtifactId, "1.0.0")
+		err := api.DeleteArtifactVersion(
+			context.Background(),
+			"test-group",
+			invalidArtifactId,
+			"1.0.0",
+		)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Artifact ID")
 	})
@@ -1697,19 +2300,35 @@ func TestVersionsAPI_HTTPRequestErrors(t *testing.T) {
 		}))
 		defer server.Close()
 
-		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: &http.Client{Timeout: time.Millisecond * 500}}
+		mockClient := &client.Client{
+			BaseURL:    server.URL,
+			HTTPClient: &http.Client{Timeout: time.Millisecond * 500},
+		}
 		api := apis.NewVersionsAPI(mockClient)
 
-		err := api.DeleteArtifactVersion(context.Background(), "test-group", "test-artifact", "1.0.0")
+		err := api.DeleteArtifactVersion(
+			context.Background(),
+			"test-group",
+			"test-artifact",
+			"1.0.0",
+		)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Client.Timeout")
 	})
 
 	t.Run("Connection Refused", func(t *testing.T) {
-		mockClient := &client.Client{BaseURL: "http://localhost:9999", HTTPClient: &http.Client{Timeout: time.Second}}
+		mockClient := &client.Client{
+			BaseURL:    "http://localhost:9999",
+			HTTPClient: &http.Client{Timeout: time.Second},
+		}
 		api := apis.NewVersionsAPI(mockClient)
 
-		err := api.DeleteArtifactVersion(context.Background(), "test-group", "test-artifact", "1.0.0")
+		err := api.DeleteArtifactVersion(
+			context.Background(),
+			"test-group",
+			"test-artifact",
+			"1.0.0",
+		)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "connection refused")
 	})
@@ -1754,7 +2373,13 @@ func TestVersionsAPIIntegration(t *testing.T) {
 			},
 		}
 
-		resp, err := versionsAPI.CreateArtifactVersion(ctx, stubGroupId, generatedArtifactID, request, false)
+		resp, err := versionsAPI.CreateArtifactVersion(
+			ctx,
+			stubGroupId,
+			generatedArtifactID,
+			request,
+			false,
+		)
 		assert.NoError(t, err)
 		assert.Equal(t, newVersion, resp.Version)
 	})
@@ -1780,7 +2405,13 @@ func TestVersionsAPIIntegration(t *testing.T) {
 		}
 
 		params := &models.ArtifactVersionReferencesParams{}
-		references, err := versionsAPI.GetArtifactVersionReferences(ctx, stubGroupId, generatedArtifactID, version, params)
+		references, err := versionsAPI.GetArtifactVersionReferences(
+			ctx,
+			stubGroupId,
+			generatedArtifactID,
+			version,
+			params,
+		)
 		assert.NoError(t, err)
 		assert.NotNil(t, references)
 	})
@@ -1792,7 +2423,13 @@ func TestVersionsAPIIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		comment, err := versionsAPI.AddArtifactVersionComment(ctx, stubGroupId, generatedArtifactID, version, "Test comment")
+		comment, err := versionsAPI.AddArtifactVersionComment(
+			ctx,
+			stubGroupId,
+			generatedArtifactID,
+			version,
+			"Test comment",
+		)
 		assert.NoError(t, err)
 		assert.Equal(t, "Test comment", comment.Value)
 	})
@@ -1805,12 +2442,23 @@ func TestVersionsAPIIntegration(t *testing.T) {
 		}
 
 		// Add a comment first
-		comment, err := versionsAPI.AddArtifactVersionComment(ctx, stubGroupId, generatedArtifactID, version, "Test comment")
+		comment, err := versionsAPI.AddArtifactVersionComment(
+			ctx,
+			stubGroupId,
+			generatedArtifactID,
+			version,
+			"Test comment",
+		)
 		assert.NoError(t, err)
 		assert.Equal(t, "Test comment", comment.Value)
 
 		// Get comments
-		comments, err := versionsAPI.GetArtifactVersionComments(ctx, stubGroupId, generatedArtifactID, version)
+		comments, err := versionsAPI.GetArtifactVersionComments(
+			ctx,
+			stubGroupId,
+			generatedArtifactID,
+			version,
+		)
 		assert.NoError(t, err)
 		assert.NotNil(t, comments)
 	})
@@ -1823,11 +2471,24 @@ func TestVersionsAPIIntegration(t *testing.T) {
 		}
 
 		// Add a comment first
-		comment, err := versionsAPI.AddArtifactVersionComment(ctx, stubGroupId, generatedArtifactID, version, "Initial comment")
+		comment, err := versionsAPI.AddArtifactVersionComment(
+			ctx,
+			stubGroupId,
+			generatedArtifactID,
+			version,
+			"Initial comment",
+		)
 		assert.NoError(t, err)
 
 		// Update the comment
-		err = versionsAPI.UpdateArtifactVersionComment(ctx, stubGroupId, generatedArtifactID, version, comment.CommentID, "Updated comment")
+		err = versionsAPI.UpdateArtifactVersionComment(
+			ctx,
+			stubGroupId,
+			generatedArtifactID,
+			version,
+			comment.CommentID,
+			"Updated comment",
+		)
 		assert.NoError(t, err)
 	})
 
@@ -1839,11 +2500,23 @@ func TestVersionsAPIIntegration(t *testing.T) {
 		}
 
 		// Add a comment first
-		comment, err := versionsAPI.AddArtifactVersionComment(ctx, stubGroupId, generatedArtifactID, version, "Temporary comment")
+		comment, err := versionsAPI.AddArtifactVersionComment(
+			ctx,
+			stubGroupId,
+			generatedArtifactID,
+			version,
+			"Temporary comment",
+		)
 		assert.NoError(t, err)
 
 		// Delete the comment
-		err = versionsAPI.DeleteArtifactVersionComment(ctx, stubGroupId, generatedArtifactID, version, comment.CommentID)
+		err = versionsAPI.DeleteArtifactVersionComment(
+			ctx,
+			stubGroupId,
+			generatedArtifactID,
+			version,
+			comment.CommentID,
+		)
 		assert.NoError(t, err)
 	})
 
@@ -1866,7 +2539,13 @@ func TestVersionsAPIIntegration(t *testing.T) {
 		}
 
 		params := &models.ArtifactReferenceParams{}
-		content, err := versionsAPI.GetArtifactVersionContent(ctx, stubGroupId, generatedArtifactID, version, params)
+		content, err := versionsAPI.GetArtifactVersionContent(
+			ctx,
+			stubGroupId,
+			generatedArtifactID,
+			version,
+			params,
+		)
 		assert.NoError(t, err)
 		assert.NotNil(t, content)
 	})
@@ -1882,7 +2561,13 @@ func TestVersionsAPIIntegration(t *testing.T) {
 			Content:     stubContent,
 			ContentType: "application/json",
 		}
-		err = versionsAPI.UpdateArtifactVersionContent(ctx, stubGroupId, generatedArtifactID, version, content)
+		err = versionsAPI.UpdateArtifactVersionContent(
+			ctx,
+			stubGroupId,
+			generatedArtifactID,
+			version,
+			content,
+		)
 		assert.NoError(t, err)
 	})
 
@@ -1908,7 +2593,12 @@ func TestVersionsAPIIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		state, err := versionsAPI.GetArtifactVersionState(ctx, stubGroupId, generatedArtifactID, version)
+		state, err := versionsAPI.GetArtifactVersionState(
+			ctx,
+			stubGroupId,
+			generatedArtifactID,
+			version,
+		)
 		assert.NoError(t, err)
 		assert.Equal(t, models.StateDraft, *state)
 	})
@@ -1920,7 +2610,14 @@ func TestVersionsAPIIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		err = versionsAPI.UpdateArtifactVersionState(ctx, stubGroupId, generatedArtifactID, version, models.StateDeprecated, false)
+		err = versionsAPI.UpdateArtifactVersionState(
+			ctx,
+			stubGroupId,
+			generatedArtifactID,
+			version,
+			models.StateDeprecated,
+			false,
+		)
 		assert.NoError(t, err)
 	})
 }

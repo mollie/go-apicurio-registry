@@ -3,9 +3,11 @@ package apis
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/url"
+
 	"github.com/mollie/go-apicurio-registry/client"
 	"github.com/mollie/go-apicurio-registry/models"
-	"net/http"
 )
 
 // MetadataAPI handles metadata-related operations for artifacts.
@@ -21,7 +23,10 @@ func NewMetadataAPI(client *client.Client) *MetadataAPI {
 }
 
 // GetArtifactVersionMetadata retrieves metadata for a single artifact version.
-func (api *MetadataAPI) GetArtifactVersionMetadata(ctx context.Context, groupId, artifactId, versionExpression string) (*models.ArtifactVersionMetadata, error) {
+func (api *MetadataAPI) GetArtifactVersionMetadata(
+	ctx context.Context,
+	groupId, artifactId, versionExpression string,
+) (*models.ArtifactVersionMetadata, error) {
 	if err := validateInput(groupId, regexGroupIDArtifactID, "Group ID"); err != nil {
 		return nil, err
 	}
@@ -32,9 +37,15 @@ func (api *MetadataAPI) GetArtifactVersionMetadata(ctx context.Context, groupId,
 		return nil, err
 	}
 
-	url := fmt.Sprintf("%s/groups/%s/artifacts/%s/versions/%s", api.Client.BaseURL, groupId, artifactId, versionExpression)
+	urlPath := fmt.Sprintf(
+		"%s/groups/%s/artifacts/%s/versions/%s",
+		api.Client.BaseURL,
+		url.PathEscape(groupId),
+		url.PathEscape(artifactId),
+		url.PathEscape(versionExpression),
+	)
 
-	resp, err := api.executeRequest(ctx, http.MethodGet, url, nil)
+	resp, err := api.executeRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +59,11 @@ func (api *MetadataAPI) GetArtifactVersionMetadata(ctx context.Context, groupId,
 }
 
 // UpdateArtifactVersionMetadata updates the user-editable metadata of an artifact version.
-func (api *MetadataAPI) UpdateArtifactVersionMetadata(ctx context.Context, groupId, artifactId, versionExpression string, metadata models.UpdateArtifactMetadataRequest) error {
+func (api *MetadataAPI) UpdateArtifactVersionMetadata(
+	ctx context.Context,
+	groupId, artifactId, versionExpression string,
+	metadata models.UpdateArtifactMetadataRequest,
+) error {
 	if err := validateInput(groupId, regexGroupIDArtifactID, "Group ID"); err != nil {
 		return err
 	}
@@ -59,9 +74,15 @@ func (api *MetadataAPI) UpdateArtifactVersionMetadata(ctx context.Context, group
 		return err
 	}
 
-	url := fmt.Sprintf("%s/groups/%s/artifacts/%s/versions/%s", api.Client.BaseURL, groupId, artifactId, versionExpression)
+	urlPath := fmt.Sprintf(
+		"%s/groups/%s/artifacts/%s/versions/%s",
+		api.Client.BaseURL,
+		url.PathEscape(groupId),
+		url.PathEscape(artifactId),
+		url.PathEscape(versionExpression),
+	)
 
-	resp, err := api.executeRequest(ctx, http.MethodPut, url, metadata)
+	resp, err := api.executeRequest(ctx, http.MethodPut, urlPath, metadata)
 	if err != nil {
 		return err
 	}
@@ -70,7 +91,10 @@ func (api *MetadataAPI) UpdateArtifactVersionMetadata(ctx context.Context, group
 }
 
 // GetArtifactMetadata retrieves metadata for an artifact based on the latest version or the next available non-disabled version.
-func (api *MetadataAPI) GetArtifactMetadata(ctx context.Context, groupId, artifactId string) (*models.ArtifactMetadata, error) {
+func (api *MetadataAPI) GetArtifactMetadata(
+	ctx context.Context,
+	groupId, artifactId string,
+) (*models.ArtifactMetadata, error) {
 	if err := validateInput(groupId, regexGroupIDArtifactID, "Group ID"); err != nil {
 		return nil, err
 	}
@@ -78,9 +102,14 @@ func (api *MetadataAPI) GetArtifactMetadata(ctx context.Context, groupId, artifa
 		return nil, err
 	}
 
-	url := fmt.Sprintf("%s/groups/%s/artifacts/%s", api.Client.BaseURL, groupId, artifactId)
+	urlPath := fmt.Sprintf(
+		"%s/groups/%s/artifacts/%s",
+		api.Client.BaseURL,
+		url.PathEscape(groupId),
+		url.PathEscape(artifactId),
+	)
 
-	resp, err := api.executeRequest(ctx, http.MethodGet, url, nil)
+	resp, err := api.executeRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +123,11 @@ func (api *MetadataAPI) GetArtifactMetadata(ctx context.Context, groupId, artifa
 }
 
 // UpdateArtifactMetadata updates the editable parts of an artifact's metadata.
-func (api *MetadataAPI) UpdateArtifactMetadata(ctx context.Context, groupId, artifactId string, metadata models.UpdateArtifactMetadataRequest) error {
+func (api *MetadataAPI) UpdateArtifactMetadata(
+	ctx context.Context,
+	groupId, artifactId string,
+	metadata models.UpdateArtifactMetadataRequest,
+) error {
 	if err := validateInput(groupId, regexGroupIDArtifactID, "Group ID"); err != nil {
 		return err
 	}
@@ -103,9 +136,14 @@ func (api *MetadataAPI) UpdateArtifactMetadata(ctx context.Context, groupId, art
 	}
 
 	// Construct the URL
-	url := fmt.Sprintf("%s/groups/%s/artifacts/%s", api.Client.BaseURL, groupId, artifactId)
+	urlPath := fmt.Sprintf(
+		"%s/groups/%s/artifacts/%s",
+		api.Client.BaseURL,
+		url.PathEscape(groupId),
+		url.PathEscape(artifactId),
+	)
 
-	resp, err := api.executeRequest(ctx, http.MethodPut, url, metadata)
+	resp, err := api.executeRequest(ctx, http.MethodPut, urlPath, metadata)
 	if err != nil {
 		return err
 	}
@@ -114,6 +152,10 @@ func (api *MetadataAPI) UpdateArtifactMetadata(ctx context.Context, groupId, art
 }
 
 // executeRequest executes an HTTP request with the given method, URL, and body.
-func (api *MetadataAPI) executeRequest(ctx context.Context, method, url string, body interface{}) (*http.Response, error) {
+func (api *MetadataAPI) executeRequest(
+	ctx context.Context,
+	method, url string,
+	body interface{},
+) (*http.Response, error) {
 	return executeRequest(ctx, api.Client, method, url, body)
 }

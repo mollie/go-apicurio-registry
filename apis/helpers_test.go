@@ -4,14 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/mollie/go-apicurio-registry/apis"
-	"github.com/mollie/go-apicurio-registry/models"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/mollie/go-apicurio-registry/apis"
+	"github.com/mollie/go-apicurio-registry/models"
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -68,7 +69,10 @@ func generateArtifactForTest(ctx context.Context, artifactsAPI *apis.ArtifactsAP
 	return newArtifactID, nil
 }
 
-func generateGroupForTest(ctx context.Context, groupAPI *apis.GroupAPI) (*models.GroupInfo, string, error) {
+func generateGroupForTest(
+	ctx context.Context,
+	groupAPI *apis.GroupAPI,
+) (*models.GroupInfo, string, error) {
 	newGroupID := generateRandomName("test-group")
 	resp, err := groupAPI.CreateGroup(ctx, newGroupID, stubDescription, stubLabels)
 	return resp, newGroupID, err
@@ -82,7 +86,13 @@ func generateRandomName(prefix string) string {
 	return fmt.Sprintf("%s-%d", prefix, time.Now().UnixNano())
 }
 
-func setupMockServer(t *testing.T, statusCode int, response interface{}, expectedURL string, expectedMethod string) *httptest.Server {
+func setupMockServer(
+	t *testing.T,
+	statusCode int,
+	response interface{},
+	expectedURL string,
+	expectedMethod string,
+) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if expectedURL != "" {
 			assert.Contains(t, expectedURL, r.URL.Path, "request URL path should match expected")
