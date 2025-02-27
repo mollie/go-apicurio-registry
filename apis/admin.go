@@ -3,9 +3,10 @@ package apis
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	"github.com/mollie/go-apicurio-registry/client"
 	"github.com/mollie/go-apicurio-registry/models"
-	"net/http"
 )
 
 type AdminAPI struct {
@@ -39,7 +40,11 @@ func (api *AdminAPI) ListGlobalRules(ctx context.Context) ([]models.Rule, error)
 // CreateGlobalRule Creates a new global rule.
 // POST /admin/rules
 // See: https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Global-rules/operation/createGlobalRule
-func (api *AdminAPI) CreateGlobalRule(ctx context.Context, rule models.Rule, level models.RuleLevel) error {
+func (api *AdminAPI) CreateGlobalRule(
+	ctx context.Context,
+	rule models.Rule,
+	level models.RuleLevel,
+) error {
 	url := fmt.Sprintf("%s/admin/rules", api.Client.BaseURL)
 
 	// Prepare the request body
@@ -71,7 +76,10 @@ func (api *AdminAPI) DeleteAllGlobalRule(ctx context.Context) error {
 // GetGlobalRule Returns information about the named globally configured rule.
 // GET /admin/rules/{rule}
 // See: https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Global-rules/operation/getGlobalRuleConfig
-func (api *AdminAPI) GetGlobalRule(ctx context.Context, rule models.Rule) (models.RuleLevel, error) {
+func (api *AdminAPI) GetGlobalRule(
+	ctx context.Context,
+	rule models.Rule,
+) (models.RuleLevel, error) {
 	url := fmt.Sprintf("%s/admin/rules/%s", api.Client.BaseURL, rule)
 	resp, err := api.executeRequest(ctx, http.MethodGet, url, nil)
 	if err != nil {
@@ -89,7 +97,11 @@ func (api *AdminAPI) GetGlobalRule(ctx context.Context, rule models.Rule) (model
 // UpdateGlobalRule Updates the configuration of the named globally configured rule.
 // PUT /admin/rules/{rule}
 // See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Global-rules/operation/updateGlobalRuleConfig
-func (api *AdminAPI) UpdateGlobalRule(ctx context.Context, rule models.Rule, level models.RuleLevel) error {
+func (api *AdminAPI) UpdateGlobalRule(
+	ctx context.Context,
+	rule models.Rule,
+	level models.RuleLevel,
+) error {
 	url := fmt.Sprintf("%s/admin/rules/%s", api.Client.BaseURL, rule)
 
 	// Prepare the request body
@@ -148,6 +160,10 @@ func (api *AdminAPI) ListArtifactTypes(ctx context.Context) ([]models.ArtifactTy
 }
 
 // executeRequest handles the creation and execution of an HTTP request.
-func (api *AdminAPI) executeRequest(ctx context.Context, method, url string, body interface{}) (*http.Response, error) {
+func (api *AdminAPI) executeRequest(
+	ctx context.Context,
+	method, url string,
+	body interface{},
+) (*http.Response, error) {
 	return executeRequest(ctx, api.Client, method, url, body)
 }

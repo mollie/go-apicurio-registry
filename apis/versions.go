@@ -3,10 +3,12 @@ package apis
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/url"
+
 	"github.com/mollie/go-apicurio-registry/client"
 	"github.com/mollie/go-apicurio-registry/models"
 	"github.com/pkg/errors"
-	"net/http"
 )
 
 type VersionsAPI struct {
@@ -39,10 +41,16 @@ func (api *VersionsAPI) DeleteArtifactVersion(
 	}
 
 	// Construct the URL
-	url := fmt.Sprintf("%s/groups/%s/artifacts/%s/versions/%s", api.Client.BaseURL, groupID, artifactID, versionExpression)
+	urlPath := fmt.Sprintf(
+		"%s/groups/%s/artifacts/%s/versions/%s",
+		api.Client.BaseURL,
+		url.PathEscape(groupID),
+		url.PathEscape(artifactID),
+		url.PathEscape(versionExpression),
+	)
 
 	// Execute the request
-	resp, err := api.executeRequest(ctx, http.MethodDelete, url, nil)
+	resp, err := api.executeRequest(ctx, http.MethodDelete, urlPath, nil)
 	if err != nil {
 		return err
 	}
@@ -81,17 +89,17 @@ func (api *VersionsAPI) GetArtifactVersionReferences(ctx context.Context,
 	}
 
 	// Start building the URL
-	url := fmt.Sprintf(
+	urlPath := fmt.Sprintf(
 		"%s/groups/%s/artifacts/%s/versions/%s/references%s",
 		api.Client.BaseURL,
-		groupId,
-		artifactId,
-		versionExpression,
+		url.PathEscape(groupId),
+		url.PathEscape(artifactId),
+		url.PathEscape(versionExpression),
 		query,
 	)
 
 	// Execute the request
-	resp, err := api.executeRequest(ctx, http.MethodGet, url, nil)
+	resp, err := api.executeRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -123,10 +131,16 @@ func (api *VersionsAPI) GetArtifactVersionComments(
 	}
 
 	// Construct the URL
-	url := fmt.Sprintf("%s/groups/%s/artifacts/%s/versions/%s/comments", api.Client.BaseURL, groupId, artifactId, versionExpression)
+	urlPath := fmt.Sprintf(
+		"%s/groups/%s/artifacts/%s/versions/%s/comments",
+		api.Client.BaseURL,
+		url.PathEscape(groupId),
+		url.PathEscape(artifactId),
+		url.PathEscape(versionExpression),
+	)
 
 	// Execute the request
-	resp, err := api.executeRequest(ctx, http.MethodGet, url, nil)
+	resp, err := api.executeRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -160,12 +174,12 @@ func (api *VersionsAPI) AddArtifactVersionComment(
 	}
 
 	// Construct the URL
-	url := fmt.Sprintf(
+	urlPath := fmt.Sprintf(
 		"%s/groups/%s/artifacts/%s/versions/%s/comments",
 		api.Client.BaseURL,
-		groupId,
-		artifactId,
-		versionExpression,
+		url.PathEscape(groupId),
+		url.PathEscape(artifactId),
+		url.PathEscape(versionExpression),
 	)
 
 	// Create the request body
@@ -174,7 +188,7 @@ func (api *VersionsAPI) AddArtifactVersionComment(
 	}
 
 	// Execute the request
-	resp, err := api.executeRequest(ctx, http.MethodPost, url, requestBody)
+	resp, err := api.executeRequest(ctx, http.MethodPost, urlPath, requestBody)
 	if err != nil {
 		return nil, err
 	}
@@ -207,13 +221,13 @@ func (api *VersionsAPI) UpdateArtifactVersionComment(
 		return err
 	}
 	// Build the URL
-	url := fmt.Sprintf(
+	urlPath := fmt.Sprintf(
 		"%s/groups/%s/artifacts/%s/versions/%s/comments/%s",
 		api.Client.BaseURL,
-		groupId,
-		artifactId,
-		versionExpression,
-		commentId,
+		url.PathEscape(groupId),
+		url.PathEscape(artifactId),
+		url.PathEscape(versionExpression),
+		url.PathEscape(commentId),
 	)
 
 	// Create the request body
@@ -222,7 +236,7 @@ func (api *VersionsAPI) UpdateArtifactVersionComment(
 	}
 
 	// Execute the request
-	resp, err := api.executeRequest(ctx, http.MethodPut, url, requestBody)
+	resp, err := api.executeRequest(ctx, http.MethodPut, urlPath, requestBody)
 	if err != nil {
 		return err
 	}
@@ -257,16 +271,16 @@ func (api *VersionsAPI) DeleteArtifactVersionComment(
 		return errors.New("Comment ID cannot be empty")
 	}
 
-	url := fmt.Sprintf(
+	urlPath := fmt.Sprintf(
 		"%s/groups/%s/artifacts/%s/versions/%s/comments/%s",
 		api.Client.BaseURL,
-		groupId,
-		artifactId,
-		versionExpression,
-		commentId,
+		url.PathEscape(groupId),
+		url.PathEscape(artifactId),
+		url.PathEscape(versionExpression),
+		url.PathEscape(commentId),
 	)
 
-	resp, err := api.executeRequest(ctx, http.MethodDelete, url, nil)
+	resp, err := api.executeRequest(ctx, http.MethodDelete, urlPath, nil)
 	if err != nil {
 		return err
 	}
@@ -297,9 +311,15 @@ func (api *VersionsAPI) ListArtifactVersions(
 		}
 		query = "?" + params.ToQuery().Encode()
 	}
-	url := fmt.Sprintf("%s/groups/%s/artifacts/%s/versions%s", api.Client.BaseURL, groupId, artifactId, query)
+	urlPath := fmt.Sprintf(
+		"%s/groups/%s/artifacts/%s/versions%s",
+		api.Client.BaseURL,
+		url.PathEscape(groupId),
+		url.PathEscape(artifactId),
+		query,
+	)
 
-	resp, err := api.executeRequest(ctx, http.MethodGet, url, nil)
+	resp, err := api.executeRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -330,12 +350,17 @@ func (api *VersionsAPI) CreateArtifactVersion(
 		return nil, err
 	}
 
-	url := fmt.Sprintf("%s/groups/%s/artifacts/%s/versions", api.Client.BaseURL, groupId, artifactId)
+	urlPath := fmt.Sprintf(
+		"%s/groups/%s/artifacts/%s/versions",
+		api.Client.BaseURL,
+		url.PathEscape(groupId),
+		url.PathEscape(artifactId),
+	)
 	if dryRun {
-		url = fmt.Sprintf("%s?dryRun=true", url)
+		urlPath = fmt.Sprintf("%s?dryRun=true", urlPath)
 	}
 
-	resp, err := api.executeRequest(ctx, http.MethodPost, url, request)
+	resp, err := api.executeRequest(ctx, http.MethodPost, urlPath, request)
 	if err != nil {
 		return nil, err
 	}
@@ -376,9 +401,16 @@ func (api *VersionsAPI) GetArtifactVersionContent(
 		}
 		query = "?" + params.ToQuery().Encode()
 	}
-	url := fmt.Sprintf("%s/groups/%s/artifacts/%s/versions/%s/content%s", api.Client.BaseURL, groupId, artifactId, versionExpression, query)
+	urlPath := fmt.Sprintf(
+		"%s/groups/%s/artifacts/%s/versions/%s/content%s",
+		api.Client.BaseURL,
+		url.PathEscape(groupId),
+		url.PathEscape(artifactId),
+		url.PathEscape(versionExpression),
+		query,
+	)
 
-	resp, err := api.executeRequest(ctx, http.MethodGet, url, nil)
+	resp, err := api.executeRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -414,9 +446,15 @@ func (api *VersionsAPI) UpdateArtifactVersionContent(
 		return errors.Wrap(err, "invalid content provided")
 	}
 
-	url := fmt.Sprintf("%s/groups/%s/artifacts/%s/versions/%s/content", api.Client.BaseURL, groupId, artifactId, versionExpression)
+	urlPath := fmt.Sprintf(
+		"%s/groups/%s/artifacts/%s/versions/%s/content",
+		api.Client.BaseURL,
+		url.PathEscape(groupId),
+		url.PathEscape(artifactId),
+		url.PathEscape(versionExpression),
+	)
 
-	resp, err := api.executeRequest(ctx, http.MethodPut, url, content)
+	resp, err := api.executeRequest(ctx, http.MethodPut, urlPath, content)
 	if err != nil {
 		return err
 	}
@@ -439,9 +477,9 @@ func (api *VersionsAPI) SearchForArtifactVersions(
 		query = params.ToQuery().Encode()
 	}
 
-	url := fmt.Sprintf("%s/search/versions?%s", api.Client.BaseURL, query)
+	urlPath := fmt.Sprintf("%s/search/versions?%s", api.Client.BaseURL, query)
 
-	resp, err := api.executeRequest(ctx, http.MethodGet, url, nil)
+	resp, err := api.executeRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -469,9 +507,9 @@ func (api *VersionsAPI) SearchForArtifactVersionByContent(
 		query = params.ToQuery().Encode()
 	}
 
-	url := fmt.Sprintf("%s/search/versions?%s", api.Client.BaseURL, query)
+	urlPath := fmt.Sprintf("%s/search/versions?%s", api.Client.BaseURL, query)
 
-	resp, err := api.executeRequest(ctx, http.MethodPost, url, content)
+	resp, err := api.executeRequest(ctx, http.MethodPost, urlPath, content)
 	if err != nil {
 		return nil, err
 	}
@@ -502,10 +540,16 @@ func (api *VersionsAPI) GetArtifactVersionState(
 	}
 
 	// Build the URL
-	url := fmt.Sprintf("%s/groups/%s/artifacts/%s/versions/%s/state", api.Client.BaseURL, groupId, artifactId, versionExpression)
+	urlPath := fmt.Sprintf(
+		"%s/groups/%s/artifacts/%s/versions/%s/state",
+		api.Client.BaseURL,
+		url.PathEscape(groupId),
+		url.PathEscape(artifactId),
+		url.PathEscape(versionExpression),
+	)
 
 	// Execute the request
-	resp, err := api.executeRequest(ctx, http.MethodGet, url, nil)
+	resp, err := api.executeRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -545,9 +589,15 @@ func (api *VersionsAPI) UpdateArtifactVersionState(
 	}
 
 	// Construct the URL with optional dryRun parameter
-	url := fmt.Sprintf("%s/groups/%s/artifacts/%s/versions/%s/state", api.Client.BaseURL, groupId, artifactId, versionExpression)
+	urlPath := fmt.Sprintf(
+		"%s/groups/%s/artifacts/%s/versions/%s/state",
+		api.Client.BaseURL,
+		url.PathEscape(groupId),
+		url.PathEscape(artifactId),
+		url.PathEscape(versionExpression),
+	)
 	if dryRun {
-		url += "?dryRun=true"
+		urlPath += "?dryRun=true"
 	}
 
 	// Create request body
@@ -556,7 +606,7 @@ func (api *VersionsAPI) UpdateArtifactVersionState(
 	}
 
 	// Execute the request
-	resp, err := api.executeRequest(ctx, http.MethodPut, url, requestBody)
+	resp, err := api.executeRequest(ctx, http.MethodPut, urlPath, requestBody)
 	if err != nil {
 		return err
 	}
@@ -570,6 +620,10 @@ func (api *VersionsAPI) UpdateArtifactVersionState(
 }
 
 // executeRequest handles the creation and execution of an HTTP request.
-func (api *VersionsAPI) executeRequest(ctx context.Context, method, url string, body interface{}) (*http.Response, error) {
+func (api *VersionsAPI) executeRequest(
+	ctx context.Context,
+	method, url string,
+	body interface{},
+) (*http.Response, error) {
 	return executeRequest(ctx, api.Client, method, url, body)
 }

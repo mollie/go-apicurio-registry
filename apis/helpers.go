@@ -5,12 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/mollie/go-apicurio-registry/client"
-	"github.com/mollie/go-apicurio-registry/models"
-	"github.com/pkg/errors"
 	"io"
 	"net/http"
 	"regexp"
+
+	"github.com/mollie/go-apicurio-registry/client"
+	"github.com/mollie/go-apicurio-registry/models"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -53,7 +54,11 @@ func parseArtifactTypeHeader(resp *http.Response) (models.ArtifactType, error) {
 	artifactTypeHeader := resp.Header.Get("X-Registry-ArtifactType")
 	artifactType, err := models.ParseArtifactType(artifactTypeHeader)
 	if err != nil {
-		return "", errors.Wrapf(err, "invalid artifact type in response header: %s", artifactTypeHeader)
+		return "", errors.Wrapf(
+			err,
+			"invalid artifact type in response header: %s",
+			artifactTypeHeader,
+		)
 	}
 	return artifactType, nil
 }
@@ -99,7 +104,12 @@ func handleRawResponse(resp *http.Response, expectedStatus int) (string, error) 
 }
 
 // executeRequest handles the creation and execution of an HTTP request.
-func executeRequest(ctx context.Context, client *client.Client, method, url string, body interface{}) (*http.Response, error) {
+func executeRequest(
+	ctx context.Context,
+	client *client.Client,
+	method, url string,
+	body interface{},
+) (*http.Response, error) {
 	var reqBody io.Reader
 	contentType := ""
 

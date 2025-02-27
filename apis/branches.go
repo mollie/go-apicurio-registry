@@ -3,10 +3,12 @@ package apis
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/url"
+
 	"github.com/mollie/go-apicurio-registry/client"
 	"github.com/mollie/go-apicurio-registry/models"
 	"github.com/pkg/errors"
-	"net/http"
 )
 
 type BranchAPI struct {
@@ -22,7 +24,11 @@ func NewBranchAPI(client *client.Client) *BranchAPI {
 // ListBranches Returns a list of all branches in the artifact.
 // Each branch is a list of version identifiers, ordered from the latest (tip of the branch) to the oldest.
 // See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Branches/operation/listBranches
-func (api *BranchAPI) ListBranches(ctx context.Context, groupId, artifactId string, params *models.ListBranchesParams) ([]models.BranchInfo, error) {
+func (api *BranchAPI) ListBranches(
+	ctx context.Context,
+	groupId, artifactId string,
+	params *models.ListBranchesParams,
+) ([]models.BranchInfo, error) {
 	if err := validateInput(artifactId, regexGroupIDArtifactID, "Artifact ID"); err != nil {
 		return nil, err
 	}
@@ -38,8 +44,14 @@ func (api *BranchAPI) ListBranches(ctx context.Context, groupId, artifactId stri
 		query = "?" + params.ToQuery().Encode()
 	}
 
-	url := fmt.Sprintf("%s/groups/%s/artifacts/%s/branches%s", api.Client.BaseURL, groupId, artifactId, query)
-	resp, err := api.executeRequest(ctx, http.MethodGet, url, nil)
+	urlPath := fmt.Sprintf(
+		"%s/groups/%s/artifacts/%s/branches%s",
+		api.Client.BaseURL,
+		url.PathEscape(groupId),
+		url.PathEscape(artifactId),
+		query,
+	)
+	resp, err := api.executeRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +68,11 @@ func (api *BranchAPI) ListBranches(ctx context.Context, groupId, artifactId stri
 // CreateBranch Creates a new branch for the artifact.
 // A new branch consists of metadata and a list of versions.
 // See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Branches/operation/createBranch
-func (api *BranchAPI) CreateBranch(ctx context.Context, groupId, artifactId string, branch *models.CreateBranchRequest) (*models.BranchInfo, error) {
+func (api *BranchAPI) CreateBranch(
+	ctx context.Context,
+	groupId, artifactId string,
+	branch *models.CreateBranchRequest,
+) (*models.BranchInfo, error) {
 	if err := validateInput(artifactId, regexGroupIDArtifactID, "Artifact ID"); err != nil {
 		return nil, err
 	}
@@ -68,8 +84,13 @@ func (api *BranchAPI) CreateBranch(ctx context.Context, groupId, artifactId stri
 		return nil, errors.Wrap(err, "invalid branch provided")
 	}
 
-	url := fmt.Sprintf("%s/groups/%s/artifacts/%s/branches", api.Client.BaseURL, groupId, artifactId)
-	resp, err := api.executeRequest(ctx, http.MethodPost, url, branch)
+	urlPath := fmt.Sprintf(
+		"%s/groups/%s/artifacts/%s/branches",
+		api.Client.BaseURL,
+		url.PathEscape(groupId),
+		url.PathEscape(artifactId),
+	)
+	resp, err := api.executeRequest(ctx, http.MethodPost, urlPath, branch)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +105,10 @@ func (api *BranchAPI) CreateBranch(ctx context.Context, groupId, artifactId stri
 
 // GetBranchMetaData Get branch metaData
 // See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Branches/operation/getBranchMetaData
-func (api *BranchAPI) GetBranchMetaData(ctx context.Context, groupId, artifactId, branchId string) (*models.BranchInfo, error) {
+func (api *BranchAPI) GetBranchMetaData(
+	ctx context.Context,
+	groupId, artifactId, branchId string,
+) (*models.BranchInfo, error) {
 	if err := validateInput(artifactId, regexGroupIDArtifactID, "Artifact ID"); err != nil {
 		return nil, err
 	}
@@ -95,8 +119,14 @@ func (api *BranchAPI) GetBranchMetaData(ctx context.Context, groupId, artifactId
 		return nil, err
 	}
 
-	url := fmt.Sprintf("%s/groups/%s/artifacts/%s/branches/%s", api.Client.BaseURL, groupId, artifactId, branchId)
-	resp, err := api.executeRequest(ctx, http.MethodGet, url, nil)
+	urlPath := fmt.Sprintf(
+		"%s/groups/%s/artifacts/%s/branches/%s",
+		api.Client.BaseURL,
+		url.PathEscape(groupId),
+		url.PathEscape(artifactId),
+		url.PathEscape(branchId),
+	)
+	resp, err := api.executeRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +141,10 @@ func (api *BranchAPI) GetBranchMetaData(ctx context.Context, groupId, artifactId
 
 // UpdateBranchMetaData Update branch metaData
 // See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Branches/operation/updateBranchMetaData
-func (api *BranchAPI) UpdateBranchMetaData(ctx context.Context, groupId, artifactId, branchId, description string) error {
+func (api *BranchAPI) UpdateBranchMetaData(
+	ctx context.Context,
+	groupId, artifactId, branchId, description string,
+) error {
 	if err := validateInput(artifactId, regexGroupIDArtifactID, "Artifact ID"); err != nil {
 		return err
 	}
@@ -122,12 +155,18 @@ func (api *BranchAPI) UpdateBranchMetaData(ctx context.Context, groupId, artifac
 		return err
 	}
 
-	url := fmt.Sprintf("%s/groups/%s/artifacts/%s/branches/%s", api.Client.BaseURL, groupId, artifactId, branchId)
+	urlPath := fmt.Sprintf(
+		"%s/groups/%s/artifacts/%s/branches/%s",
+		api.Client.BaseURL,
+		url.PathEscape(groupId),
+		url.PathEscape(artifactId),
+		url.PathEscape(branchId),
+	)
 
 	branchMetaData := models.UpdateBranchMetaDataRequest{
 		Description: description,
 	}
-	resp, err := api.executeRequest(ctx, http.MethodPut, url, branchMetaData)
+	resp, err := api.executeRequest(ctx, http.MethodPut, urlPath, branchMetaData)
 	if err != nil {
 		return err
 	}
@@ -142,7 +181,10 @@ func (api *BranchAPI) UpdateBranchMetaData(ctx context.Context, groupId, artifac
 
 // DeleteBranch Deletes a single branch in the artifact.
 // See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Branches/operation/deleteBranch
-func (api *BranchAPI) DeleteBranch(ctx context.Context, groupId, artifactId, branchId string) error {
+func (api *BranchAPI) DeleteBranch(
+	ctx context.Context,
+	groupId, artifactId, branchId string,
+) error {
 	if err := validateInput(artifactId, regexGroupIDArtifactID, "Artifact ID"); err != nil {
 		return err
 	}
@@ -153,8 +195,14 @@ func (api *BranchAPI) DeleteBranch(ctx context.Context, groupId, artifactId, bra
 		return err
 	}
 
-	url := fmt.Sprintf("%s/groups/%s/artifacts/%s/branches/%s", api.Client.BaseURL, groupId, artifactId, branchId)
-	resp, err := api.executeRequest(ctx, http.MethodDelete, url, nil)
+	urlPath := fmt.Sprintf(
+		"%s/groups/%s/artifacts/%s/branches/%s",
+		api.Client.BaseURL,
+		url.PathEscape(groupId),
+		url.PathEscape(artifactId),
+		url.PathEscape(branchId),
+	)
+	resp, err := api.executeRequest(ctx, http.MethodDelete, urlPath, nil)
 	if err != nil {
 		return err
 	}
@@ -169,7 +217,11 @@ func (api *BranchAPI) DeleteBranch(ctx context.Context, groupId, artifactId, bra
 // GetVersionsInBranch Get a list of all versions in the branch.
 // Returns a list of version identifiers in the branch, ordered from the latest (tip of the branch) to the oldest.
 // See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Branches/operation/listBranchVersions
-func (api *BranchAPI) GetVersionsInBranch(ctx context.Context, groupId, artifactId, branchId string, params *models.ListBranchesParams) ([]models.ArtifactVersion, error) {
+func (api *BranchAPI) GetVersionsInBranch(
+	ctx context.Context,
+	groupId, artifactId, branchId string,
+	params *models.ListBranchesParams,
+) ([]models.ArtifactVersion, error) {
 	if err := validateInput(artifactId, regexGroupIDArtifactID, "Artifact ID"); err != nil {
 		return nil, err
 	}
@@ -188,8 +240,15 @@ func (api *BranchAPI) GetVersionsInBranch(ctx context.Context, groupId, artifact
 		query = "?" + params.ToQuery().Encode()
 	}
 
-	url := fmt.Sprintf("%s/groups/%s/artifacts/%s/branches/%s/versions%s", api.Client.BaseURL, groupId, artifactId, branchId, query)
-	resp, err := api.executeRequest(ctx, http.MethodGet, url, nil)
+	urlPath := fmt.Sprintf(
+		"%s/groups/%s/artifacts/%s/branches/%s/versions%s",
+		api.Client.BaseURL,
+		url.PathEscape(groupId),
+		url.PathEscape(artifactId),
+		url.PathEscape(branchId),
+		query,
+	)
+	resp, err := api.executeRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -205,7 +264,11 @@ func (api *BranchAPI) GetVersionsInBranch(ctx context.Context, groupId, artifact
 // ReplaceVersionsInBranch Add a new version to an artifact branch. Branch is created if it does not exist.
 // Returns a list of version identifiers in the artifact branch, ordered from the latest (tip of the branch) to the oldest.
 // See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Branches/operation/replaceBranchVersions
-func (api *BranchAPI) ReplaceVersionsInBranch(ctx context.Context, groupId, artifactId, branchId string, versions []string) error {
+func (api *BranchAPI) ReplaceVersionsInBranch(
+	ctx context.Context,
+	groupId, artifactId, branchId string,
+	versions []string,
+) error {
 	if err := validateInput(artifactId, regexGroupIDArtifactID, "Artifact ID"); err != nil {
 		return err
 	}
@@ -227,13 +290,19 @@ func (api *BranchAPI) ReplaceVersionsInBranch(ctx context.Context, groupId, arti
 		}
 	}
 
-	url := fmt.Sprintf("%s/groups/%s/artifacts/%s/branches/%s/versions", api.Client.BaseURL, groupId, artifactId, branchId)
+	urlPath := fmt.Sprintf(
+		"%s/groups/%s/artifacts/%s/branches/%s/versions",
+		api.Client.BaseURL,
+		url.PathEscape(groupId),
+		url.PathEscape(artifactId),
+		url.PathEscape(branchId),
+	)
 
 	requestBody := map[string]interface{}{
 		"versions": versions,
 	}
 
-	resp, err := api.executeRequest(ctx, http.MethodPut, url, requestBody)
+	resp, err := api.executeRequest(ctx, http.MethodPut, urlPath, requestBody)
 	if err != nil {
 		return err
 	}
@@ -248,7 +317,10 @@ func (api *BranchAPI) ReplaceVersionsInBranch(ctx context.Context, groupId, arti
 
 // AddVersionToBranch Add a new version to an artifact branch.
 // See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/Branches/operation/addVersionToBranch
-func (api *BranchAPI) AddVersionToBranch(ctx context.Context, groupId, artifactId, branchId, version string) error {
+func (api *BranchAPI) AddVersionToBranch(
+	ctx context.Context,
+	groupId, artifactId, branchId, version string,
+) error {
 	if err := validateInput(artifactId, regexGroupIDArtifactID, "Artifact ID"); err != nil {
 		return err
 	}
@@ -262,12 +334,18 @@ func (api *BranchAPI) AddVersionToBranch(ctx context.Context, groupId, artifactI
 		return err
 	}
 
-	url := fmt.Sprintf("%s/groups/%s/artifacts/%s/branches/%s/versions", api.Client.BaseURL, groupId, artifactId, branchId)
+	urlPath := fmt.Sprintf(
+		"%s/groups/%s/artifacts/%s/branches/%s/versions",
+		api.Client.BaseURL,
+		url.PathEscape(groupId),
+		url.PathEscape(artifactId),
+		url.PathEscape(branchId),
+	)
 
 	requestBody := map[string]interface{}{
 		"version": version,
 	}
-	resp, err := api.executeRequest(ctx, http.MethodPost, url, requestBody)
+	resp, err := api.executeRequest(ctx, http.MethodPost, urlPath, requestBody)
 	if err != nil {
 		return err
 	}
@@ -280,6 +358,10 @@ func (api *BranchAPI) AddVersionToBranch(ctx context.Context, groupId, artifactI
 }
 
 // executeRequest handles the creation and execution of an HTTP request.
-func (api *BranchAPI) executeRequest(ctx context.Context, method, url string, body interface{}) (*http.Response, error) {
+func (api *BranchAPI) executeRequest(
+	ctx context.Context,
+	method, url string,
+	body interface{},
+) (*http.Response, error) {
 	return executeRequest(ctx, api.Client, method, url, body)
 }

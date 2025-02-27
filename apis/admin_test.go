@@ -2,12 +2,13 @@ package apis_test
 
 import (
 	"context"
+	"net/http"
+	"testing"
+
 	"github.com/mollie/go-apicurio-registry/apis"
 	"github.com/mollie/go-apicurio-registry/client"
 	"github.com/mollie/go-apicurio-registry/models"
 	"github.com/stretchr/testify/assert"
-	"net/http"
-	"testing"
 )
 
 func TestAdminAPI_ListGlobalRules(t *testing.T) {
@@ -27,8 +28,17 @@ func TestAdminAPI_ListGlobalRules(t *testing.T) {
 	})
 
 	t.Run("InternalServerError", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
-		server := setupMockServer(t, http.StatusInternalServerError, errorResponse, "/admin/rules", http.MethodGet)
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			errorResponse,
+			"/admin/rules",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -49,43 +59,80 @@ func TestAdminAPI_CreateGlobalRule(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewAdminAPI(mockClient)
 
-		err := api.CreateGlobalRule(context.Background(), models.RuleValidity, models.ValidityLevelFull)
+		err := api.CreateGlobalRule(
+			context.Background(),
+			models.RuleValidity,
+			models.ValidityLevelFull,
+		)
 		assert.NoError(t, err)
 	})
 
 	t.Run("BadRequest", func(t *testing.T) {
 		errorResponse := models.APIError{Status: http.StatusBadRequest, Title: TitleBadRequest}
-		server := setupMockServer(t, http.StatusBadRequest, errorResponse, "/admin/rules", http.MethodPost)
+		server := setupMockServer(
+			t,
+			http.StatusBadRequest,
+			errorResponse,
+			"/admin/rules",
+			http.MethodPost,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewAdminAPI(mockClient)
 
-		err := api.CreateGlobalRule(context.Background(), models.RuleValidity, models.ValidityLevelFull)
+		err := api.CreateGlobalRule(
+			context.Background(),
+			models.RuleValidity,
+			models.ValidityLevelFull,
+		)
 		assertAPIError(t, err, http.StatusBadRequest, TitleBadRequest)
 	})
 
 	t.Run("Conflict", func(t *testing.T) {
 		errorResponse := models.APIError{Status: http.StatusConflict, Title: TitleConflict}
-		server := setupMockServer(t, http.StatusConflict, errorResponse, "/admin/rules", http.MethodPost)
+		server := setupMockServer(
+			t,
+			http.StatusConflict,
+			errorResponse,
+			"/admin/rules",
+			http.MethodPost,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewAdminAPI(mockClient)
 
-		err := api.CreateGlobalRule(context.Background(), models.RuleValidity, models.ValidityLevelFull)
+		err := api.CreateGlobalRule(
+			context.Background(),
+			models.RuleValidity,
+			models.ValidityLevelFull,
+		)
 		assertAPIError(t, err, http.StatusConflict, TitleConflict)
 	})
 
 	t.Run("InternalServerError", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
-		server := setupMockServer(t, http.StatusInternalServerError, errorResponse, "/admin/rules", http.MethodPost)
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			errorResponse,
+			"/admin/rules",
+			http.MethodPost,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewAdminAPI(mockClient)
 
-		err := api.CreateGlobalRule(context.Background(), models.RuleValidity, models.ValidityLevelFull)
+		err := api.CreateGlobalRule(
+			context.Background(),
+			models.RuleValidity,
+			models.ValidityLevelFull,
+		)
 		assertAPIError(t, err, http.StatusInternalServerError, TitleInternalServerError)
 	})
 }
@@ -103,8 +150,17 @@ func TestAdminAPI_DeleteAllGlobalRule(t *testing.T) {
 	})
 
 	t.Run("InternalServerError", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
-		server := setupMockServer(t, http.StatusInternalServerError, errorResponse, "/admin/rules", http.MethodDelete)
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			errorResponse,
+			"/admin/rules",
+			http.MethodDelete,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -116,10 +172,19 @@ func TestAdminAPI_DeleteAllGlobalRule(t *testing.T) {
 }
 
 func TestAdminAPI_GetGlobalRule(t *testing.T) {
-	mockResponse := models.RuleResponse{RuleType: models.RuleValidity, Config: models.ValidityLevelFull}
+	mockResponse := models.RuleResponse{
+		RuleType: models.RuleValidity,
+		Config:   models.ValidityLevelFull,
+	}
 
 	t.Run("Success", func(t *testing.T) {
-		server := setupMockServer(t, http.StatusOK, mockResponse, "/admin/rules/VALIDITY", http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusOK,
+			mockResponse,
+			"/admin/rules/VALIDITY",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -132,7 +197,13 @@ func TestAdminAPI_GetGlobalRule(t *testing.T) {
 
 	t.Run("NotFound", func(t *testing.T) {
 		errorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
-		server := setupMockServer(t, http.StatusNotFound, errorResponse, "/admin/rules/VALIDITY", http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusNotFound,
+			errorResponse,
+			"/admin/rules/VALIDITY",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -145,8 +216,17 @@ func TestAdminAPI_GetGlobalRule(t *testing.T) {
 	})
 
 	t.Run("InternalServerError", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
-		server := setupMockServer(t, http.StatusInternalServerError, errorResponse, "/admin/rules/VALIDITY", http.MethodGet)
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			errorResponse,
+			"/admin/rules/VALIDITY",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -166,56 +246,105 @@ func TestAdminAPI_UpdateGlobalRule(t *testing.T) {
 	}
 
 	t.Run("Success", func(t *testing.T) {
-		server := setupMockServer(t, http.StatusOK, mockResponse, "/admin/rules/VALIDITY", http.MethodPut)
+		server := setupMockServer(
+			t,
+			http.StatusOK,
+			mockResponse,
+			"/admin/rules/VALIDITY",
+			http.MethodPut,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewAdminAPI(mockClient)
 
-		err := api.UpdateGlobalRule(context.Background(), models.RuleValidity, models.ValidityLevelFull)
+		err := api.UpdateGlobalRule(
+			context.Background(),
+			models.RuleValidity,
+			models.ValidityLevelFull,
+		)
 		assert.NoError(t, err)
 	})
 
 	t.Run("NotFound", func(t *testing.T) {
 		errorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
-		server := setupMockServer(t, http.StatusNotFound, errorResponse, "/admin/rules/VALIDITY", http.MethodPut)
+		server := setupMockServer(
+			t,
+			http.StatusNotFound,
+			errorResponse,
+			"/admin/rules/VALIDITY",
+			http.MethodPut,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewAdminAPI(mockClient)
 
-		err := api.UpdateGlobalRule(context.Background(), models.RuleValidity, models.ValidityLevelFull)
+		err := api.UpdateGlobalRule(
+			context.Background(),
+			models.RuleValidity,
+			models.ValidityLevelFull,
+		)
 		assertAPIError(t, err, http.StatusNotFound, TitleNotFound)
 	})
 
 	t.Run("BadRequest", func(t *testing.T) {
 		errorResponse := models.APIError{Status: http.StatusBadRequest, Title: TitleBadRequest}
-		server := setupMockServer(t, http.StatusBadRequest, errorResponse, "/admin/rules/VALIDITY", http.MethodPut)
+		server := setupMockServer(
+			t,
+			http.StatusBadRequest,
+			errorResponse,
+			"/admin/rules/VALIDITY",
+			http.MethodPut,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewAdminAPI(mockClient)
 
-		err := api.UpdateGlobalRule(context.Background(), models.RuleValidity, models.ValidityLevelFull)
+		err := api.UpdateGlobalRule(
+			context.Background(),
+			models.RuleValidity,
+			models.ValidityLevelFull,
+		)
 		assertAPIError(t, err, http.StatusBadRequest, TitleBadRequest)
 	})
 
 	t.Run("InternalServerError", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
-		server := setupMockServer(t, http.StatusInternalServerError, errorResponse, "/admin/rules/VALIDITY", http.MethodPut)
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			errorResponse,
+			"/admin/rules/VALIDITY",
+			http.MethodPut,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewAdminAPI(mockClient)
 
-		err := api.UpdateGlobalRule(context.Background(), models.RuleValidity, models.ValidityLevelFull)
+		err := api.UpdateGlobalRule(
+			context.Background(),
+			models.RuleValidity,
+			models.ValidityLevelFull,
+		)
 		assertAPIError(t, err, http.StatusInternalServerError, TitleInternalServerError)
 	})
 }
 
 func TestAdminAPI_DeleteGlobalRule(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		server := setupMockServer(t, http.StatusNoContent, nil, "/admin/rules/VALIDITY", http.MethodDelete)
+		server := setupMockServer(
+			t,
+			http.StatusNoContent,
+			nil,
+			"/admin/rules/VALIDITY",
+			http.MethodDelete,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -227,7 +356,13 @@ func TestAdminAPI_DeleteGlobalRule(t *testing.T) {
 
 	t.Run("NotFound", func(t *testing.T) {
 		errorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
-		server := setupMockServer(t, http.StatusNotFound, errorResponse, "/admin/rules/VALIDITY", http.MethodDelete)
+		server := setupMockServer(
+			t,
+			http.StatusNotFound,
+			errorResponse,
+			"/admin/rules/VALIDITY",
+			http.MethodDelete,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -238,8 +373,17 @@ func TestAdminAPI_DeleteGlobalRule(t *testing.T) {
 	})
 
 	t.Run("InternalServerError", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
-		server := setupMockServer(t, http.StatusInternalServerError, errorResponse, "/admin/rules/VALIDITY", http.MethodDelete)
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			errorResponse,
+			"/admin/rules/VALIDITY",
+			http.MethodDelete,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -257,7 +401,13 @@ func TestAdminAPI_ListArtifactTypes(t *testing.T) {
 	}
 
 	t.Run("Success", func(t *testing.T) {
-		server := setupMockServer(t, http.StatusOK, mockResponse, "/admin/config/artifactTypes", http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusOK,
+			mockResponse,
+			"/admin/config/artifactTypes",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -270,8 +420,17 @@ func TestAdminAPI_ListArtifactTypes(t *testing.T) {
 	})
 
 	t.Run("InternalServerError", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
-		server := setupMockServer(t, http.StatusInternalServerError, errorResponse, "/admin/config/artifactTypes", http.MethodGet)
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			errorResponse,
+			"/admin/config/artifactTypes",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -368,7 +527,11 @@ func TestAdminAPI_Rules_Integration(t *testing.T) {
 		err = adminAPI.CreateGlobalRule(ctx, models.RuleValidity, models.ValidityLevelFull)
 		assert.NoError(t, err)
 
-		err = adminAPI.CreateGlobalRule(ctx, models.RuleCompatibility, models.CompatibilityLevelFull)
+		err = adminAPI.CreateGlobalRule(
+			ctx,
+			models.RuleCompatibility,
+			models.CompatibilityLevelFull,
+		)
 		assert.NoError(t, err)
 
 		err = adminAPI.CreateGlobalRule(ctx, models.RuleIntegrity, models.IntegrityLevelFull)

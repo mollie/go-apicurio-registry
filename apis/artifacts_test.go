@@ -3,16 +3,17 @@ package apis_test
 import (
 	"context"
 	"fmt"
-	"github.com/mollie/go-apicurio-registry/apis"
-	"github.com/mollie/go-apicurio-registry/client"
-	"github.com/mollie/go-apicurio-registry/models"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/mollie/go-apicurio-registry/apis"
+	"github.com/mollie/go-apicurio-registry/client"
+	"github.com/mollie/go-apicurio-registry/models"
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestArtifactsAPI_GetArtifactByGlobalID(t *testing.T) {
@@ -61,7 +62,13 @@ func TestArtifactsAPI_GetArtifactByGlobalID(t *testing.T) {
 
 	t.Run("Not Found", func(t *testing.T) {
 		errorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
-		server := setupMockServer(t, http.StatusNotFound, errorResponse, "/ids/globalIds/1", http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusNotFound,
+			errorResponse,
+			"/ids/globalIds/1",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -74,8 +81,17 @@ func TestArtifactsAPI_GetArtifactByGlobalID(t *testing.T) {
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
-		server := setupMockServer(t, http.StatusInternalServerError, errorResponse, "/ids/globalIds/1", http.MethodGet)
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			errorResponse,
+			"/ids/globalIds/1",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -102,7 +118,13 @@ func TestArtifactsAPI_SearchArtifacts(t *testing.T) {
 			Count: 1,
 		}
 
-		server := setupMockServer(t, http.StatusOK, mockResponse, "/search/artifacts", http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusOK,
+			mockResponse,
+			"/search/artifacts",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -120,8 +142,17 @@ func TestArtifactsAPI_SearchArtifacts(t *testing.T) {
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
-		server := setupMockServer(t, http.StatusInternalServerError, errorResponse, "/search/artifacts", http.MethodGet)
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			errorResponse,
+			"/search/artifacts",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -150,14 +181,24 @@ func TestArtifactsAPI_SearchArtifactsByContent(t *testing.T) {
 			Count: 1,
 		}
 
-		server := setupMockServer(t, http.StatusOK, mockResponse, "/search/artifacts", http.MethodPost)
+		server := setupMockServer(
+			t,
+			http.StatusOK,
+			mockResponse,
+			"/search/artifacts",
+			http.MethodPost,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewArtifactsAPI(mockClient)
 
 		params := &models.SearchArtifactsByContentParams{Canonical: true}
-		result, err := api.SearchArtifactsByContent(context.Background(), []byte("{\"key\":\"value\"}"), params)
+		result, err := api.SearchArtifactsByContent(
+			context.Background(),
+			[]byte("{\"key\":\"value\"}"),
+			params,
+		)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -169,7 +210,13 @@ func TestArtifactsAPI_SearchArtifactsByContent(t *testing.T) {
 
 	t.Run("Invalid Content", func(t *testing.T) {
 		errorResponse := models.APIError{Status: http.StatusBadRequest, Title: TitleBadRequest}
-		server := setupMockServer(t, http.StatusBadRequest, errorResponse, "/search/artifacts", http.MethodPost)
+		server := setupMockServer(
+			t,
+			http.StatusBadRequest,
+			errorResponse,
+			"/search/artifacts",
+			http.MethodPost,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -190,7 +237,13 @@ func TestArtifactsAPI_ListArtifactReferences(t *testing.T) {
 			{GroupID: "group-1", ArtifactID: "artifact-1", Version: "v1"},
 		}
 
-		server := setupMockServer(t, http.StatusOK, mockReferences, "/ids/contentId/123/references", http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusOK,
+			mockReferences,
+			"/ids/contentId/123/references",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -208,7 +261,13 @@ func TestArtifactsAPI_ListArtifactReferences(t *testing.T) {
 
 	t.Run("Not Found", func(t *testing.T) {
 		errorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
-		server := setupMockServer(t, http.StatusNotFound, errorResponse, "/ids/contentId/123/references", http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusNotFound,
+			errorResponse,
+			"/ids/contentId/123/references",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -228,7 +287,13 @@ func TestArtifactsAPI_ListArtifactReferencesByGlobalID(t *testing.T) {
 			{GroupID: "group-1", ArtifactID: "artifact-1", Version: "v1"},
 		}
 
-		server := setupMockServer(t, http.StatusOK, mockReferences, "/ids/globalIds/123/references", http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusOK,
+			mockReferences,
+			"/ids/globalIds/123/references",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -246,8 +311,17 @@ func TestArtifactsAPI_ListArtifactReferencesByGlobalID(t *testing.T) {
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
-		server := setupMockServer(t, http.StatusInternalServerError, errorResponse, "/ids/globalIds/123/references", http.MethodGet)
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			errorResponse,
+			"/ids/globalIds/123/references",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -268,7 +342,13 @@ func TestArtifactsAPI_ListArtifactReferencesByHash(t *testing.T) {
 			{GroupID: "group-1", ArtifactID: "artifact-1", Version: "v1"},
 		}
 
-		server := setupMockServer(t, http.StatusOK, mockReferences, "/ids/contentHashes/hash-123/references", http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusOK,
+			mockReferences,
+			"/ids/contentHashes/hash-123/references",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -285,8 +365,17 @@ func TestArtifactsAPI_ListArtifactReferencesByHash(t *testing.T) {
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
-		server := setupMockServer(t, http.StatusInternalServerError, errorResponse, "/ids/contentHashes/hash-123/references", http.MethodGet)
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			errorResponse,
+			"/ids/contentHashes/hash-123/references",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -314,7 +403,13 @@ func TestArtifactsAPI_ListArtifactsInGroup(t *testing.T) {
 			Count: 1,
 		}
 
-		server := setupMockServer(t, http.StatusOK, mockResponse, "/groups/group-1/artifacts", http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusOK,
+			mockResponse,
+			"/groups/group-1/artifacts",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -332,8 +427,17 @@ func TestArtifactsAPI_ListArtifactsInGroup(t *testing.T) {
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
-		server := setupMockServer(t, http.StatusInternalServerError, errorResponse, "/groups/group-1/artifacts", http.MethodGet)
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			errorResponse,
+			"/groups/group-1/artifacts",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -377,7 +481,13 @@ func TestArtifactsAPI_GetArtifactContentByHash(t *testing.T) {
 
 	t.Run("Not Found", func(t *testing.T) {
 		errorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
-		server := setupMockServer(t, http.StatusNotFound, errorResponse, "/ids/contentHashes/hash-123", http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusNotFound,
+			errorResponse,
+			"/ids/contentHashes/hash-123",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -390,8 +500,17 @@ func TestArtifactsAPI_GetArtifactContentByHash(t *testing.T) {
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
-		server := setupMockServer(t, http.StatusInternalServerError, errorResponse, "/ids/contentHashes/hash-123", http.MethodGet)
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			errorResponse,
+			"/ids/contentHashes/hash-123",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -433,7 +552,13 @@ func TestArtifactsAPI_GetArtifactContentByID(t *testing.T) {
 
 	t.Run("Not Found", func(t *testing.T) {
 		errorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
-		server := setupMockServer(t, http.StatusNotFound, errorResponse, "/ids/contentIds/123", http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusNotFound,
+			errorResponse,
+			"/ids/contentIds/123",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -446,8 +571,17 @@ func TestArtifactsAPI_GetArtifactContentByID(t *testing.T) {
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
-		server := setupMockServer(t, http.StatusInternalServerError, errorResponse, "/ids/contentIds/123", http.MethodGet)
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			errorResponse,
+			"/ids/contentIds/123",
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -462,7 +596,13 @@ func TestArtifactsAPI_GetArtifactContentByID(t *testing.T) {
 
 func TestArtifactsAPI_DeleteArtifactsInGroup(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		server := setupMockServer(t, http.StatusNoContent, nil, "/groups/group-1/artifacts", http.MethodDelete)
+		server := setupMockServer(
+			t,
+			http.StatusNoContent,
+			nil,
+			"/groups/group-1/artifacts",
+			http.MethodDelete,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -474,7 +614,13 @@ func TestArtifactsAPI_DeleteArtifactsInGroup(t *testing.T) {
 
 	t.Run("Not Found", func(t *testing.T) {
 		errorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
-		server := setupMockServer(t, http.StatusNotFound, errorResponse, "/groups/group-1/artifacts", http.MethodDelete)
+		server := setupMockServer(
+			t,
+			http.StatusNotFound,
+			errorResponse,
+			"/groups/group-1/artifacts",
+			http.MethodDelete,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -486,8 +632,17 @@ func TestArtifactsAPI_DeleteArtifactsInGroup(t *testing.T) {
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
-		server := setupMockServer(t, http.StatusInternalServerError, errorResponse, "/groups/group-1/artifacts", http.MethodDelete)
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			errorResponse,
+			"/groups/group-1/artifacts",
+			http.MethodDelete,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -501,7 +656,13 @@ func TestArtifactsAPI_DeleteArtifactsInGroup(t *testing.T) {
 
 func TestArtifactsAPI_DeleteArtifact(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		server := setupMockServer(t, http.StatusNoContent, nil, "/groups/test-group/artifacts/artifact-1", http.MethodDelete)
+		server := setupMockServer(
+			t,
+			http.StatusNoContent,
+			nil,
+			"/groups/test-group/artifacts/artifact-1",
+			http.MethodDelete,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -513,7 +674,13 @@ func TestArtifactsAPI_DeleteArtifact(t *testing.T) {
 
 	t.Run("Not Found", func(t *testing.T) {
 		errorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
-		server := setupMockServer(t, http.StatusNotFound, errorResponse, "/groups/test-group/artifacts/artifact-1", http.MethodDelete)
+		server := setupMockServer(
+			t,
+			http.StatusNotFound,
+			errorResponse,
+			"/groups/test-group/artifacts/artifact-1",
+			http.MethodDelete,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -525,8 +692,17 @@ func TestArtifactsAPI_DeleteArtifact(t *testing.T) {
 	})
 
 	t.Run("Not Allowed", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusMethodNotAllowed, Title: TitleMethodNotAllowed}
-		server := setupMockServer(t, http.StatusMethodNotAllowed, errorResponse, "/groups/test-group/artifacts/artifact-1", http.MethodDelete)
+		errorResponse := models.APIError{
+			Status: http.StatusMethodNotAllowed,
+			Title:  TitleMethodNotAllowed,
+		}
+		server := setupMockServer(
+			t,
+			http.StatusMethodNotAllowed,
+			errorResponse,
+			"/groups/test-group/artifacts/artifact-1",
+			http.MethodDelete,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -538,8 +714,17 @@ func TestArtifactsAPI_DeleteArtifact(t *testing.T) {
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
-		server := setupMockServer(t, http.StatusInternalServerError, errorResponse, "/groups/test-group/artifacts/artifact-1", http.MethodDelete)
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			errorResponse,
+			"/groups/test-group/artifacts/artifact-1",
+			http.MethodDelete,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -562,7 +747,13 @@ func TestArtifactsAPI_CreateArtifact(t *testing.T) {
 			},
 		}
 
-		server := setupMockServer(t, http.StatusOK, mockResponse, "/groups/test-group/artifacts", http.MethodPost)
+		server := setupMockServer(
+			t,
+			http.StatusOK,
+			mockResponse,
+			"/groups/test-group/artifacts",
+			http.MethodPost,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -573,7 +764,10 @@ func TestArtifactsAPI_CreateArtifact(t *testing.T) {
 			ArtifactType: models.Json,
 			FirstVersion: models.CreateVersionRequest{
 				Version: "1.0.0",
-				Content: models.CreateContentRequest{Content: "{\"key\":\"value\"}", ContentType: "application/json"},
+				Content: models.CreateContentRequest{
+					Content:     "{\"key\":\"value\"}",
+					ContentType: "application/json",
+				},
 			},
 		}
 		params := &models.CreateArtifactParams{IfExists: models.IfExistsCreate}
@@ -595,7 +789,13 @@ func TestArtifactsAPI_CreateArtifact(t *testing.T) {
 			},
 		}
 
-		server := setupMockServer(t, http.StatusOK, mockResponse, "/groups/test-group/artifacts", http.MethodPost)
+		server := setupMockServer(
+			t,
+			http.StatusOK,
+			mockResponse,
+			"/groups/test-group/artifacts",
+			http.MethodPost,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -617,7 +817,13 @@ func TestArtifactsAPI_CreateArtifact(t *testing.T) {
 
 	t.Run("Bad Request", func(t *testing.T) {
 		errorResponse := models.APIError{Status: http.StatusBadRequest, Title: TitleBadRequest}
-		server := setupMockServer(t, http.StatusBadRequest, errorResponse, "/groups/test-group/artifacts", http.MethodPost)
+		server := setupMockServer(
+			t,
+			http.StatusBadRequest,
+			errorResponse,
+			"/groups/test-group/artifacts",
+			http.MethodPost,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -628,7 +834,10 @@ func TestArtifactsAPI_CreateArtifact(t *testing.T) {
 			ArtifactType: models.Json,
 			FirstVersion: models.CreateVersionRequest{
 				Version: "1.0.0",
-				Content: models.CreateContentRequest{Content: "{\"key\":\"value\"}", ContentType: "application/json"},
+				Content: models.CreateContentRequest{
+					Content:     "{\"key\":\"value\"}",
+					ContentType: "application/json",
+				},
 			},
 		}
 		params := &models.CreateArtifactParams{IfExists: models.IfExistsCreate}
@@ -641,7 +850,13 @@ func TestArtifactsAPI_CreateArtifact(t *testing.T) {
 
 	t.Run("Conflict", func(t *testing.T) {
 		errorResponse := models.APIError{Status: http.StatusConflict, Title: TitleConflict}
-		server := setupMockServer(t, http.StatusConflict, errorResponse, "/groups/test-group/artifacts", http.MethodPost)
+		server := setupMockServer(
+			t,
+			http.StatusConflict,
+			errorResponse,
+			"/groups/test-group/artifacts",
+			http.MethodPost,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -652,7 +867,10 @@ func TestArtifactsAPI_CreateArtifact(t *testing.T) {
 			ArtifactType: models.Json,
 			FirstVersion: models.CreateVersionRequest{
 				Version: "1.0.0",
-				Content: models.CreateContentRequest{Content: "{\"key\":\"value\"}", ContentType: "application/json"},
+				Content: models.CreateContentRequest{
+					Content:     "{\"key\":\"value\"}",
+					ContentType: "application/json",
+				},
 			},
 		}
 		params := &models.CreateArtifactParams{IfExists: models.IfExistsCreate}
@@ -664,8 +882,17 @@ func TestArtifactsAPI_CreateArtifact(t *testing.T) {
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
-		server := setupMockServer(t, http.StatusInternalServerError, errorResponse, "/groups/test-group/artifacts", http.MethodPost)
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			errorResponse,
+			"/groups/test-group/artifacts",
+			http.MethodPost,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -676,7 +903,10 @@ func TestArtifactsAPI_CreateArtifact(t *testing.T) {
 			ArtifactType: models.Json,
 			FirstVersion: models.CreateVersionRequest{
 				Version: "1.0.0",
-				Content: models.CreateContentRequest{Content: "{\"key\":\"value\"}", ContentType: "application/json"},
+				Content: models.CreateContentRequest{
+					Content:     "{\"key\":\"value\"}",
+					ContentType: "application/json",
+				},
 			},
 		}
 		params := &models.CreateArtifactParams{IfExists: models.IfExistsCreate}
@@ -692,8 +922,17 @@ func TestArtifactsAPI_ListArtifactRules(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockReferences := []models.Rule{models.RuleValidity, models.RuleCompatibility}
 
-		server := setupMockServer(t, http.StatusOK, mockReferences,
-			fmt.Sprintf("/groups/%s/artifacts/%s/rules", stubGroupId, stubArtifactId), http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusOK,
+			mockReferences,
+			fmt.Sprintf(
+				"/groups/%s/artifacts/%s/rules",
+				stubGroupId,
+				stubArtifactId,
+			),
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -711,8 +950,17 @@ func TestArtifactsAPI_ListArtifactRules(t *testing.T) {
 	t.Run("Not Found", func(t *testing.T) {
 		errorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
 
-		server := setupMockServer(t, http.StatusNotFound, errorResponse,
-			fmt.Sprintf("/groups/%s/artifacts/%s/rules", stubGroupId, stubArtifactId), http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusNotFound,
+			errorResponse,
+			fmt.Sprintf(
+				"/groups/%s/artifacts/%s/rules",
+				stubGroupId,
+				stubArtifactId,
+			),
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -726,10 +974,22 @@ func TestArtifactsAPI_ListArtifactRules(t *testing.T) {
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
 
-		server := setupMockServer(t, http.StatusInternalServerError, errorResponse,
-			fmt.Sprintf("/groups/%s/artifacts/%s/rules", stubGroupId, stubArtifactId), http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			errorResponse,
+			fmt.Sprintf(
+				"/groups/%s/artifacts/%s/rules",
+				stubGroupId,
+				stubArtifactId,
+			),
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -745,69 +1005,147 @@ func TestArtifactsAPI_ListArtifactRules(t *testing.T) {
 
 func TestArtifactsAPI_CreateArtifactRule(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		server := setupMockServer(t, http.StatusNoContent, nil,
-			fmt.Sprintf("/groups/%s/artifacts/%s/rules", stubGroupId, stubArtifactId), http.MethodPost)
+		server := setupMockServer(
+			t,
+			http.StatusNoContent,
+			nil,
+			fmt.Sprintf(
+				"/groups/%s/artifacts/%s/rules",
+				stubGroupId,
+				stubArtifactId,
+			),
+			http.MethodPost,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewArtifactsAPI(mockClient)
 
-		err := api.CreateArtifactRule(context.Background(), stubGroupId, stubArtifactId, models.RuleValidity, models.ValidityLevelFull)
+		err := api.CreateArtifactRule(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			models.RuleValidity,
+			models.ValidityLevelFull,
+		)
 		assert.NoError(t, err)
 	})
 
 	t.Run("BadRequest", func(t *testing.T) {
 		errorResponse := models.APIError{Status: http.StatusBadRequest, Title: TitleBadRequest}
-		server := setupMockServer(t, http.StatusBadRequest, errorResponse,
-			fmt.Sprintf("/groups/%s/artifacts/%s/rules", stubGroupId, stubArtifactId), http.MethodPost)
+		server := setupMockServer(
+			t,
+			http.StatusBadRequest,
+			errorResponse,
+			fmt.Sprintf(
+				"/groups/%s/artifacts/%s/rules",
+				stubGroupId,
+				stubArtifactId,
+			),
+			http.MethodPost,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewArtifactsAPI(mockClient)
 
-		err := api.CreateArtifactRule(context.Background(), stubGroupId, stubArtifactId, models.RuleValidity, models.ValidityLevelFull)
+		err := api.CreateArtifactRule(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			models.RuleValidity,
+			models.ValidityLevelFull,
+		)
 		assert.Error(t, err)
 		assertAPIError(t, err, http.StatusBadRequest, TitleBadRequest)
 	})
 
 	t.Run("Conflict", func(t *testing.T) {
 		errorResponse := models.APIError{Status: http.StatusConflict, Title: TitleConflict}
-		server := setupMockServer(t, http.StatusConflict, errorResponse,
-			fmt.Sprintf("/groups/%s/artifacts/%s/rules", stubGroupId, stubArtifactId), http.MethodPost)
+		server := setupMockServer(
+			t,
+			http.StatusConflict,
+			errorResponse,
+			fmt.Sprintf(
+				"/groups/%s/artifacts/%s/rules",
+				stubGroupId,
+				stubArtifactId,
+			),
+			http.MethodPost,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewArtifactsAPI(mockClient)
 
-		err := api.CreateArtifactRule(context.Background(), stubGroupId, stubArtifactId, models.RuleValidity, models.ValidityLevelFull)
+		err := api.CreateArtifactRule(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			models.RuleValidity,
+			models.ValidityLevelFull,
+		)
 		assert.Error(t, err)
 		assertAPIError(t, err, http.StatusConflict, TitleConflict)
 	})
 
 	t.Run("NotFound", func(t *testing.T) {
 		errorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
-		server := setupMockServer(t, http.StatusNotFound, errorResponse,
-			fmt.Sprintf("/groups/%s/artifacts/%s/rules", stubGroupId, stubArtifactId), http.MethodPost)
+		server := setupMockServer(
+			t,
+			http.StatusNotFound,
+			errorResponse,
+			fmt.Sprintf(
+				"/groups/%s/artifacts/%s/rules",
+				stubGroupId,
+				stubArtifactId,
+			),
+			http.MethodPost,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewArtifactsAPI(mockClient)
 
-		err := api.CreateArtifactRule(context.Background(), stubGroupId, stubArtifactId, models.RuleValidity, models.ValidityLevelFull)
+		err := api.CreateArtifactRule(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			models.RuleValidity,
+			models.ValidityLevelFull,
+		)
 		assert.Error(t, err)
 		assertAPIError(t, err, http.StatusNotFound, TitleNotFound)
 	})
 
 	t.Run("InternalServerError", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
-		server := setupMockServer(t, http.StatusInternalServerError, errorResponse,
-			fmt.Sprintf("/groups/%s/artifacts/%s/rules", stubGroupId, stubArtifactId), http.MethodPost)
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			errorResponse,
+			fmt.Sprintf(
+				"/groups/%s/artifacts/%s/rules",
+				stubGroupId,
+				stubArtifactId,
+			),
+			http.MethodPost,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewArtifactsAPI(mockClient)
 
-		err := api.CreateArtifactRule(context.Background(), stubGroupId, stubArtifactId, models.RuleValidity, models.ValidityLevelFull)
+		err := api.CreateArtifactRule(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			models.RuleValidity,
+			models.ValidityLevelFull,
+		)
 		assert.Error(t, err)
 		assertAPIError(t, err, http.StatusInternalServerError, TitleInternalServerError)
 	})
@@ -815,8 +1153,17 @@ func TestArtifactsAPI_CreateArtifactRule(t *testing.T) {
 
 func TestArtifactsAPI_DeleteAllArtifactRule(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		server := setupMockServer(t, http.StatusNoContent, nil,
-			fmt.Sprintf("/groups/%s/artifacts/%s/rules", stubGroupId, stubArtifactId), http.MethodDelete)
+		server := setupMockServer(
+			t,
+			http.StatusNoContent,
+			nil,
+			fmt.Sprintf(
+				"/groups/%s/artifacts/%s/rules",
+				stubGroupId,
+				stubArtifactId,
+			),
+			http.MethodDelete,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -828,8 +1175,17 @@ func TestArtifactsAPI_DeleteAllArtifactRule(t *testing.T) {
 
 	t.Run("NotFound", func(t *testing.T) {
 		errorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
-		server := setupMockServer(t, http.StatusNotFound, errorResponse,
-			fmt.Sprintf("/groups/%s/artifacts/%s/rules", stubGroupId, stubArtifactId), http.MethodDelete)
+		server := setupMockServer(
+			t,
+			http.StatusNotFound,
+			errorResponse,
+			fmt.Sprintf(
+				"/groups/%s/artifacts/%s/rules",
+				stubGroupId,
+				stubArtifactId,
+			),
+			http.MethodDelete,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -841,9 +1197,21 @@ func TestArtifactsAPI_DeleteAllArtifactRule(t *testing.T) {
 	})
 
 	t.Run("InternalServerError", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
-		server := setupMockServer(t, http.StatusInternalServerError, errorResponse,
-			fmt.Sprintf("/groups/%s/artifacts/%s/rules", stubGroupId, stubArtifactId), http.MethodDelete)
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			errorResponse,
+			fmt.Sprintf(
+				"/groups/%s/artifacts/%s/rules",
+				stubGroupId,
+				stubArtifactId,
+			),
+			http.MethodDelete,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -863,14 +1231,29 @@ func TestArtifactsAPI_GetArtifactRule(t *testing.T) {
 	}
 
 	t.Run("Success", func(t *testing.T) {
-		server := setupMockServer(t, http.StatusOK, successResponse,
-			fmt.Sprintf("/groups/%s/artifacts/%s/rules/%s", stubGroupId, stubArtifactId, mockRule), http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusOK,
+			successResponse,
+			fmt.Sprintf(
+				"/groups/%s/artifacts/%s/rules/%s",
+				stubGroupId,
+				stubArtifactId,
+				mockRule,
+			),
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewArtifactsAPI(mockClient)
 
-		result, err := api.GetArtifactRule(context.Background(), stubGroupId, stubArtifactId, mockRule)
+		result, err := api.GetArtifactRule(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			mockRule,
+		)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -879,14 +1262,29 @@ func TestArtifactsAPI_GetArtifactRule(t *testing.T) {
 
 	t.Run("NotFound", func(t *testing.T) {
 		errorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
-		server := setupMockServer(t, http.StatusNotFound, errorResponse,
-			fmt.Sprintf("/groups/%s/artifacts/%s/rules/%s", stubGroupId, stubArtifactId, mockRule), http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusNotFound,
+			errorResponse,
+			fmt.Sprintf(
+				"/groups/%s/artifacts/%s/rules/%s",
+				stubGroupId,
+				stubArtifactId,
+				mockRule,
+			),
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewArtifactsAPI(mockClient)
 
-		result, err := api.GetArtifactRule(context.Background(), stubGroupId, stubArtifactId, mockRule)
+		result, err := api.GetArtifactRule(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			mockRule,
+		)
 
 		assert.Error(t, err)
 		assert.Empty(t, result)
@@ -894,15 +1292,33 @@ func TestArtifactsAPI_GetArtifactRule(t *testing.T) {
 	})
 
 	t.Run("InternalServerError", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
-		server := setupMockServer(t, http.StatusInternalServerError, errorResponse,
-			fmt.Sprintf("/groups/%s/artifacts/%s/rules/%s", stubGroupId, stubArtifactId, mockRule), http.MethodGet)
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			errorResponse,
+			fmt.Sprintf(
+				"/groups/%s/artifacts/%s/rules/%s",
+				stubGroupId,
+				stubArtifactId,
+				mockRule,
+			),
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewArtifactsAPI(mockClient)
 
-		result, err := api.GetArtifactRule(context.Background(), stubGroupId, stubArtifactId, mockRule)
+		result, err := api.GetArtifactRule(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			mockRule,
+		)
 
 		assert.Error(t, err)
 		assert.Empty(t, result)
@@ -918,41 +1334,92 @@ func TestArtifactsAPI_UpdateArtifactRule(t *testing.T) {
 	}
 
 	t.Run("Success", func(t *testing.T) {
-		server := setupMockServer(t, http.StatusOK, successResponse,
-			fmt.Sprintf("/groups/%s/artifacts/%s/rules/%s", stubGroupId, stubArtifactId, mockRule), http.MethodPut)
+		server := setupMockServer(
+			t,
+			http.StatusOK,
+			successResponse,
+			fmt.Sprintf(
+				"/groups/%s/artifacts/%s/rules/%s",
+				stubGroupId,
+				stubArtifactId,
+				mockRule,
+			),
+			http.MethodPut,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewArtifactsAPI(mockClient)
 
-		err := api.UpdateArtifactRule(context.Background(), stubGroupId, stubArtifactId, mockRule, models.ValidityLevelFull)
+		err := api.UpdateArtifactRule(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			mockRule,
+			models.ValidityLevelFull,
+		)
 		assert.NoError(t, err)
 	})
 
 	t.Run("NotFound", func(t *testing.T) {
 		errorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
-		server := setupMockServer(t, http.StatusNotFound, errorResponse,
-			fmt.Sprintf("/groups/%s/artifacts/%s/rules/%s", stubGroupId, stubArtifactId, mockRule), http.MethodPut)
+		server := setupMockServer(
+			t,
+			http.StatusNotFound,
+			errorResponse,
+			fmt.Sprintf(
+				"/groups/%s/artifacts/%s/rules/%s",
+				stubGroupId,
+				stubArtifactId,
+				mockRule,
+			),
+			http.MethodPut,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewArtifactsAPI(mockClient)
 
-		err := api.UpdateArtifactRule(context.Background(), stubGroupId, stubArtifactId, mockRule, models.ValidityLevelFull)
+		err := api.UpdateArtifactRule(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			mockRule,
+			models.ValidityLevelFull,
+		)
 		assert.Error(t, err)
 		assertAPIError(t, err, http.StatusNotFound, TitleNotFound)
 	})
 
 	t.Run("InternalServerError", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
-		server := setupMockServer(t, http.StatusInternalServerError, errorResponse,
-			fmt.Sprintf("/groups/%s/artifacts/%s/rules/%s", stubGroupId, stubArtifactId, mockRule), http.MethodPut)
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			errorResponse,
+			fmt.Sprintf(
+				"/groups/%s/artifacts/%s/rules/%s",
+				stubGroupId,
+				stubArtifactId,
+				mockRule,
+			),
+			http.MethodPut,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewArtifactsAPI(mockClient)
 
-		err := api.UpdateArtifactRule(context.Background(), stubGroupId, stubArtifactId, mockRule, models.ValidityLevelFull)
+		err := api.UpdateArtifactRule(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			mockRule,
+			models.ValidityLevelFull,
+		)
 		assert.Error(t, err)
 		assertAPIError(t, err, http.StatusInternalServerError, TitleInternalServerError)
 	})
@@ -962,8 +1429,18 @@ func TestArtifactsAPI_DeleteArtifactRule(t *testing.T) {
 	mockRule := models.RuleValidity
 
 	t.Run("Success", func(t *testing.T) {
-		server := setupMockServer(t, http.StatusNoContent, nil,
-			fmt.Sprintf("/groups/%s/artifacts/%s/rules/%s", stubGroupId, stubArtifactId, mockRule), http.MethodDelete)
+		server := setupMockServer(
+			t,
+			http.StatusNoContent,
+			nil,
+			fmt.Sprintf(
+				"/groups/%s/artifacts/%s/rules/%s",
+				stubGroupId,
+				stubArtifactId,
+				mockRule,
+			),
+			http.MethodDelete,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -976,8 +1453,18 @@ func TestArtifactsAPI_DeleteArtifactRule(t *testing.T) {
 	t.Run("NotFound", func(t *testing.T) {
 		errorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
 
-		server := setupMockServer(t, http.StatusNotFound, errorResponse,
-			fmt.Sprintf("/groups/%s/artifacts/%s/rules/%s", stubGroupId, stubArtifactId, mockRule), http.MethodDelete)
+		server := setupMockServer(
+			t,
+			http.StatusNotFound,
+			errorResponse,
+			fmt.Sprintf(
+				"/groups/%s/artifacts/%s/rules/%s",
+				stubGroupId,
+				stubArtifactId,
+				mockRule,
+			),
+			http.MethodDelete,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -989,10 +1476,23 @@ func TestArtifactsAPI_DeleteArtifactRule(t *testing.T) {
 	})
 
 	t.Run("InternalServerError", func(t *testing.T) {
-		errorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
+		errorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
 
-		server := setupMockServer(t, http.StatusInternalServerError, errorResponse,
-			fmt.Sprintf("/groups/%s/artifacts/%s/rules/%s", stubGroupId, stubArtifactId, mockRule), http.MethodDelete)
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			errorResponse,
+			fmt.Sprintf(
+				"/groups/%s/artifacts/%s/rules/%s",
+				stubGroupId,
+				stubArtifactId,
+				mockRule,
+			),
+			http.MethodDelete,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -1146,7 +1646,13 @@ func TestArtifactsAPIIntegration(t *testing.T) {
 		assert.Len(t, rules, 0)
 
 		// Create a rule
-		err = artifactsAPI.CreateArtifactRule(ctx, stubGroupId, randomArtifactID, models.RuleValidity, models.ValidityLevelFull)
+		err = artifactsAPI.CreateArtifactRule(
+			ctx,
+			stubGroupId,
+			randomArtifactID,
+			models.RuleValidity,
+			models.ValidityLevelFull,
+		)
 		assert.NoError(t, err)
 
 		// List artifact rules
@@ -1156,21 +1662,42 @@ func TestArtifactsAPIIntegration(t *testing.T) {
 		assert.Equal(t, models.RuleValidity, rules[0])
 
 		// Get the rule
-		rule, err := artifactsAPI.GetArtifactRule(ctx, stubGroupId, randomArtifactID, models.RuleValidity)
+		rule, err := artifactsAPI.GetArtifactRule(
+			ctx,
+			stubGroupId,
+			randomArtifactID,
+			models.RuleValidity,
+		)
 		assert.NoError(t, err)
 		assert.Equal(t, models.ValidityLevelFull, rule)
 
 		// Update the rule
-		err = artifactsAPI.UpdateArtifactRule(ctx, stubGroupId, randomArtifactID, models.RuleValidity, models.ValidityLevelSyntaxOnly)
+		err = artifactsAPI.UpdateArtifactRule(
+			ctx,
+			stubGroupId,
+			randomArtifactID,
+			models.RuleValidity,
+			models.ValidityLevelSyntaxOnly,
+		)
 		assert.NoError(t, err)
 
 		// Get the rule
-		rule, err = artifactsAPI.GetArtifactRule(ctx, stubGroupId, randomArtifactID, models.RuleValidity)
+		rule, err = artifactsAPI.GetArtifactRule(
+			ctx,
+			stubGroupId,
+			randomArtifactID,
+			models.RuleValidity,
+		)
 		assert.NoError(t, err)
 		assert.Equal(t, models.ValidityLevelSyntaxOnly, rule)
 
 		// Delete the rule
-		err = artifactsAPI.DeleteArtifactRule(ctx, stubGroupId, randomArtifactID, models.RuleValidity)
+		err = artifactsAPI.DeleteArtifactRule(
+			ctx,
+			stubGroupId,
+			randomArtifactID,
+			models.RuleValidity,
+		)
 		assert.NoError(t, err)
 
 		// List artifact rules
@@ -1179,11 +1706,29 @@ func TestArtifactsAPIIntegration(t *testing.T) {
 		assert.Len(t, rules, 0)
 
 		// Create three rules
-		err = artifactsAPI.CreateArtifactRule(ctx, stubGroupId, randomArtifactID, models.RuleValidity, models.ValidityLevelFull)
+		err = artifactsAPI.CreateArtifactRule(
+			ctx,
+			stubGroupId,
+			randomArtifactID,
+			models.RuleValidity,
+			models.ValidityLevelFull,
+		)
 		assert.NoError(t, err)
-		err = artifactsAPI.CreateArtifactRule(ctx, stubGroupId, randomArtifactID, models.RuleCompatibility, models.CompatibilityLevelFull)
+		err = artifactsAPI.CreateArtifactRule(
+			ctx,
+			stubGroupId,
+			randomArtifactID,
+			models.RuleCompatibility,
+			models.CompatibilityLevelFull,
+		)
 		assert.NoError(t, err)
-		err = artifactsAPI.CreateArtifactRule(ctx, stubGroupId, randomArtifactID, models.RuleIntegrity, models.IntegrityLevelFull)
+		err = artifactsAPI.CreateArtifactRule(
+			ctx,
+			stubGroupId,
+			randomArtifactID,
+			models.RuleIntegrity,
+			models.IntegrityLevelFull,
+		)
 		assert.NoError(t, err)
 
 		// List artifact rules

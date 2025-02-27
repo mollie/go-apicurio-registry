@@ -2,12 +2,13 @@ package apis_test
 
 import (
 	"context"
+	"net/http"
+	"testing"
+
 	"github.com/mollie/go-apicurio-registry/apis"
 	"github.com/mollie/go-apicurio-registry/client"
 	"github.com/mollie/go-apicurio-registry/models"
 	"github.com/stretchr/testify/assert"
-	"net/http"
-	"testing"
 )
 
 func TestBranchAPI_ListBranches(t *testing.T) {
@@ -61,7 +62,13 @@ func TestBranchAPI_ListBranches(t *testing.T) {
 	t.Run("Not Found", func(t *testing.T) {
 		mockErrorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
 
-		server := setupMockServer(t, http.StatusNotFound, mockErrorResponse, expectedURL, http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusNotFound,
+			mockErrorResponse,
+			expectedURL,
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -75,9 +82,18 @@ func TestBranchAPI_ListBranches(t *testing.T) {
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		mockErrorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
+		mockErrorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
 
-		server := setupMockServer(t, http.StatusInternalServerError, mockErrorResponse, expectedURL, http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			mockErrorResponse,
+			expectedURL,
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -116,7 +132,12 @@ func TestBranchAPI_CreateBranch(t *testing.T) {
 			BranchID:    stubBranchID,
 			Description: stubDescription,
 		}
-		branch, err := api.CreateBranch(context.Background(), stubGroupId, stubArtifactId, &branchInfo)
+		branch, err := api.CreateBranch(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			&branchInfo,
+		)
 		assert.NoError(t, err)
 		assert.NotNil(t, branch)
 		assert.Equal(t, stubGroupId, branch.GroupId)
@@ -147,7 +168,13 @@ func TestBranchAPI_CreateBranch(t *testing.T) {
 	t.Run("Conflict", func(t *testing.T) {
 		mockErrorResponse := models.APIError{Status: http.StatusConflict, Title: TitleConflict}
 
-		server := setupMockServer(t, http.StatusConflict, mockErrorResponse, expectedURL, http.MethodPost)
+		server := setupMockServer(
+			t,
+			http.StatusConflict,
+			mockErrorResponse,
+			expectedURL,
+			http.MethodPost,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -157,7 +184,12 @@ func TestBranchAPI_CreateBranch(t *testing.T) {
 			BranchID:    stubBranchID,
 			Description: stubDescription,
 		}
-		branch, err := api.CreateBranch(context.Background(), stubGroupId, stubArtifactId, &branchInfo)
+		branch, err := api.CreateBranch(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			&branchInfo,
+		)
 		assert.Error(t, err)
 		assert.Nil(t, branch)
 
@@ -167,7 +199,13 @@ func TestBranchAPI_CreateBranch(t *testing.T) {
 	t.Run("Not Found", func(t *testing.T) {
 		mockErrorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
 
-		server := setupMockServer(t, http.StatusNotFound, mockErrorResponse, expectedURL, http.MethodPost)
+		server := setupMockServer(
+			t,
+			http.StatusNotFound,
+			mockErrorResponse,
+			expectedURL,
+			http.MethodPost,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -177,7 +215,12 @@ func TestBranchAPI_CreateBranch(t *testing.T) {
 			BranchID:    stubBranchID,
 			Description: stubDescription,
 		}
-		branch, err := api.CreateBranch(context.Background(), stubGroupId, stubArtifactId, &branchInfo)
+		branch, err := api.CreateBranch(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			&branchInfo,
+		)
 		assert.Error(t, err)
 		assert.Nil(t, branch)
 
@@ -185,9 +228,18 @@ func TestBranchAPI_CreateBranch(t *testing.T) {
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		mockErrorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
+		mockErrorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
 
-		server := setupMockServer(t, http.StatusInternalServerError, mockErrorResponse, expectedURL, http.MethodPost)
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			mockErrorResponse,
+			expectedURL,
+			http.MethodPost,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -197,7 +249,12 @@ func TestBranchAPI_CreateBranch(t *testing.T) {
 			BranchID:    stubBranchID,
 			Description: stubDescription,
 		}
-		branch, err := api.CreateBranch(context.Background(), stubGroupId, stubArtifactId, &branchInfo)
+		branch, err := api.CreateBranch(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			&branchInfo,
+		)
 		assert.Error(t, err)
 		assert.Nil(t, branch)
 
@@ -226,7 +283,12 @@ func TestBranchAPI_GetBranchMetaData(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewBranchAPI(mockClient)
 
-		branch, err := api.GetBranchMetaData(context.Background(), stubGroupId, stubArtifactId, stubBranchID)
+		branch, err := api.GetBranchMetaData(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			stubBranchID,
+		)
 		assert.NoError(t, err)
 		assert.NotNil(t, branch)
 		assert.Equal(t, stubGroupId, branch.GroupId)
@@ -255,13 +317,24 @@ func TestBranchAPI_GetBranchMetaData(t *testing.T) {
 	t.Run("Not Found", func(t *testing.T) {
 		mockErrorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
 
-		server := setupMockServer(t, http.StatusNotFound, mockErrorResponse, expectedURL, http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusNotFound,
+			mockErrorResponse,
+			expectedURL,
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewBranchAPI(mockClient)
 
-		branch, err := api.GetBranchMetaData(context.Background(), stubGroupId, stubArtifactId, stubBranchID)
+		branch, err := api.GetBranchMetaData(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			stubBranchID,
+		)
 		assert.Error(t, err)
 		assert.Nil(t, branch)
 
@@ -269,15 +342,29 @@ func TestBranchAPI_GetBranchMetaData(t *testing.T) {
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		mockErrorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
+		mockErrorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
 
-		server := setupMockServer(t, http.StatusInternalServerError, mockErrorResponse, expectedURL, http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			mockErrorResponse,
+			expectedURL,
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewBranchAPI(mockClient)
 
-		branch, err := api.GetBranchMetaData(context.Background(), stubGroupId, stubArtifactId, stubBranchID)
+		branch, err := api.GetBranchMetaData(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			stubBranchID,
+		)
 		assert.Error(t, err)
 		assert.Nil(t, branch)
 
@@ -296,7 +383,13 @@ func TestBranchAPI_UpdateBranchMetaData(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewBranchAPI(mockClient)
 
-		err := api.UpdateBranchMetaData(context.Background(), stubGroupId, stubArtifactId, stubBranchID, stubUpdatedDescription)
+		err := api.UpdateBranchMetaData(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			stubBranchID,
+			stubUpdatedDescription,
+		)
 		assert.NoError(t, err)
 	})
 
@@ -305,17 +398,35 @@ func TestBranchAPI_UpdateBranchMetaData(t *testing.T) {
 		api := apis.NewBranchAPI(mockClient)
 
 		// Empty GroupID
-		err := api.UpdateBranchMetaData(context.Background(), "", stubArtifactId, stubBranchID, stubUpdatedDescription)
+		err := api.UpdateBranchMetaData(
+			context.Background(),
+			"",
+			stubArtifactId,
+			stubBranchID,
+			stubUpdatedDescription,
+		)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Group ID")
 
 		// Empty ArtifactID
-		err = api.UpdateBranchMetaData(context.Background(), stubGroupId, "", stubBranchID, stubUpdatedDescription)
+		err = api.UpdateBranchMetaData(
+			context.Background(),
+			stubGroupId,
+			"",
+			stubBranchID,
+			stubUpdatedDescription,
+		)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Artifact ID")
 
 		// Empty BranchID
-		err = api.UpdateBranchMetaData(context.Background(), stubGroupId, stubArtifactId, "", stubUpdatedDescription)
+		err = api.UpdateBranchMetaData(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			"",
+			stubUpdatedDescription,
+		)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Branch ID")
 	})
@@ -323,28 +434,55 @@ func TestBranchAPI_UpdateBranchMetaData(t *testing.T) {
 	t.Run("Not Found", func(t *testing.T) {
 		mockErrorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
 
-		server := setupMockServer(t, http.StatusNotFound, mockErrorResponse, expectedURL, http.MethodPut)
+		server := setupMockServer(
+			t,
+			http.StatusNotFound,
+			mockErrorResponse,
+			expectedURL,
+			http.MethodPut,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewBranchAPI(mockClient)
 
-		err := api.UpdateBranchMetaData(context.Background(), stubGroupId, stubArtifactId, stubBranchID, stubUpdatedDescription)
+		err := api.UpdateBranchMetaData(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			stubBranchID,
+			stubUpdatedDescription,
+		)
 		assert.Error(t, err)
 
 		assertAPIError(t, err, http.StatusNotFound, TitleNotFound)
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		mockErrorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
+		mockErrorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
 
-		server := setupMockServer(t, http.StatusInternalServerError, mockErrorResponse, expectedURL, http.MethodPut)
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			mockErrorResponse,
+			expectedURL,
+			http.MethodPut,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewBranchAPI(mockClient)
 
-		err := api.UpdateBranchMetaData(context.Background(), stubGroupId, stubArtifactId, stubBranchID, stubUpdatedDescription)
+		err := api.UpdateBranchMetaData(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			stubBranchID,
+			stubUpdatedDescription,
+		)
 		assert.Error(t, err)
 
 		assertAPIError(t, err, http.StatusInternalServerError, TitleInternalServerError)
@@ -388,7 +526,13 @@ func TestBranchAPI_DeleteBranch(t *testing.T) {
 	t.Run("Not Found", func(t *testing.T) {
 		mockErrorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
 
-		server := setupMockServer(t, http.StatusNotFound, mockErrorResponse, expectedURL, http.MethodDelete)
+		server := setupMockServer(
+			t,
+			http.StatusNotFound,
+			mockErrorResponse,
+			expectedURL,
+			http.MethodDelete,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -403,7 +547,13 @@ func TestBranchAPI_DeleteBranch(t *testing.T) {
 	t.Run("Conflict", func(t *testing.T) {
 		mockErrorResponse := models.APIError{Status: http.StatusConflict, Title: TitleConflict}
 
-		server := setupMockServer(t, http.StatusConflict, mockErrorResponse, expectedURL, http.MethodDelete)
+		server := setupMockServer(
+			t,
+			http.StatusConflict,
+			mockErrorResponse,
+			expectedURL,
+			http.MethodDelete,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -416,9 +566,18 @@ func TestBranchAPI_DeleteBranch(t *testing.T) {
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		mockErrorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
+		mockErrorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
 
-		server := setupMockServer(t, http.StatusInternalServerError, mockErrorResponse, expectedURL, http.MethodDelete)
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			mockErrorResponse,
+			expectedURL,
+			http.MethodDelete,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
@@ -469,7 +628,13 @@ func TestBranchAPI_GetVersionsInBranch(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewBranchAPI(mockClient)
 
-		versions, err := api.GetVersionsInBranch(context.Background(), stubGroupId, stubArtifactId, stubBranchID, nil)
+		versions, err := api.GetVersionsInBranch(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			stubBranchID,
+			nil,
+		)
 		assert.NoError(t, err)
 		assert.NotNil(t, versions)
 		assert.Len(t, versions, 2)
@@ -483,7 +648,13 @@ func TestBranchAPI_GetVersionsInBranch(t *testing.T) {
 		api := apis.NewBranchAPI(mockClient)
 
 		// Empty GroupID
-		_, err := api.GetVersionsInBranch(context.Background(), "", stubArtifactId, stubBranchID, nil)
+		_, err := api.GetVersionsInBranch(
+			context.Background(),
+			"",
+			stubArtifactId,
+			stubBranchID,
+			nil,
+		)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Group ID")
 
@@ -501,13 +672,25 @@ func TestBranchAPI_GetVersionsInBranch(t *testing.T) {
 	t.Run("Not Found", func(t *testing.T) {
 		mockErrorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
 
-		server := setupMockServer(t, http.StatusNotFound, mockErrorResponse, expectedURL, http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusNotFound,
+			mockErrorResponse,
+			expectedURL,
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewBranchAPI(mockClient)
 
-		versions, err := api.GetVersionsInBranch(context.Background(), stubGroupId, stubArtifactId, stubBranchID, nil)
+		versions, err := api.GetVersionsInBranch(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			stubBranchID,
+			nil,
+		)
 		assert.Error(t, err)
 		assert.Nil(t, versions)
 
@@ -515,15 +698,30 @@ func TestBranchAPI_GetVersionsInBranch(t *testing.T) {
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		mockErrorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
+		mockErrorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
 
-		server := setupMockServer(t, http.StatusInternalServerError, mockErrorResponse, expectedURL, http.MethodGet)
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			mockErrorResponse,
+			expectedURL,
+			http.MethodGet,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewBranchAPI(mockClient)
 
-		versions, err := api.GetVersionsInBranch(context.Background(), stubGroupId, stubArtifactId, stubBranchID, nil)
+		versions, err := api.GetVersionsInBranch(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			stubBranchID,
+			nil,
+		)
 		assert.Error(t, err)
 		assert.Nil(t, versions)
 
@@ -541,7 +739,13 @@ func TestBranchAPI_ReplaceVersionsInBranch(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewBranchAPI(mockClient)
 
-		err := api.ReplaceVersionsInBranch(context.Background(), stubGroupId, stubArtifactId, stubBranchID, []string{stubVersionID, stubVersionID2})
+		err := api.ReplaceVersionsInBranch(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			stubBranchID,
+			[]string{stubVersionID, stubVersionID2},
+		)
 		assert.NoError(t, err)
 	})
 
@@ -550,27 +754,57 @@ func TestBranchAPI_ReplaceVersionsInBranch(t *testing.T) {
 		api := apis.NewBranchAPI(mockClient)
 
 		// Empty GroupID
-		err := api.ReplaceVersionsInBranch(context.Background(), "", stubArtifactId, stubBranchID, []string{stubVersionID})
+		err := api.ReplaceVersionsInBranch(
+			context.Background(),
+			"",
+			stubArtifactId,
+			stubBranchID,
+			[]string{stubVersionID},
+		)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Group ID")
 
 		// Empty ArtifactID
-		err = api.ReplaceVersionsInBranch(context.Background(), stubGroupId, "", stubBranchID, []string{stubVersionID})
+		err = api.ReplaceVersionsInBranch(
+			context.Background(),
+			stubGroupId,
+			"",
+			stubBranchID,
+			[]string{stubVersionID},
+		)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Artifact ID")
 
 		// Empty BranchID
-		err = api.ReplaceVersionsInBranch(context.Background(), stubGroupId, stubArtifactId, "", []string{stubVersionID})
+		err = api.ReplaceVersionsInBranch(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			"",
+			[]string{stubVersionID},
+		)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Branch ID")
 
 		// Empty Versions List
-		err = api.ReplaceVersionsInBranch(context.Background(), stubGroupId, stubArtifactId, stubBranchID, []string{})
+		err = api.ReplaceVersionsInBranch(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			stubBranchID,
+			[]string{},
+		)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "versions must not be empty")
 
 		// Invalid Version Format
-		err = api.ReplaceVersionsInBranch(context.Background(), stubGroupId, stubArtifactId, stubBranchID, []string{""})
+		err = api.ReplaceVersionsInBranch(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			stubBranchID,
+			[]string{""},
+		)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Version")
 	})
@@ -578,28 +812,55 @@ func TestBranchAPI_ReplaceVersionsInBranch(t *testing.T) {
 	t.Run("Not Found", func(t *testing.T) {
 		mockErrorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
 
-		server := setupMockServer(t, http.StatusNotFound, mockErrorResponse, expectedURL, http.MethodPut)
+		server := setupMockServer(
+			t,
+			http.StatusNotFound,
+			mockErrorResponse,
+			expectedURL,
+			http.MethodPut,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewBranchAPI(mockClient)
 
-		err := api.ReplaceVersionsInBranch(context.Background(), stubGroupId, stubArtifactId, stubBranchID, []string{stubVersionID, stubVersionID2})
+		err := api.ReplaceVersionsInBranch(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			stubBranchID,
+			[]string{stubVersionID, stubVersionID2},
+		)
 		assert.Error(t, err)
 
 		assertAPIError(t, err, http.StatusNotFound, TitleNotFound)
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		mockErrorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
+		mockErrorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
 
-		server := setupMockServer(t, http.StatusInternalServerError, mockErrorResponse, expectedURL, http.MethodPut)
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			mockErrorResponse,
+			expectedURL,
+			http.MethodPut,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewBranchAPI(mockClient)
 
-		err := api.ReplaceVersionsInBranch(context.Background(), stubGroupId, stubArtifactId, stubBranchID, []string{stubVersionID, stubVersionID2})
+		err := api.ReplaceVersionsInBranch(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			stubBranchID,
+			[]string{stubVersionID, stubVersionID2},
+		)
 		assert.Error(t, err)
 
 		assertAPIError(t, err, http.StatusInternalServerError, TitleInternalServerError)
@@ -616,7 +877,13 @@ func TestBranchAPI_AddVersionToBranch(t *testing.T) {
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewBranchAPI(mockClient)
 
-		err := api.AddVersionToBranch(context.Background(), stubGroupId, stubArtifactId, stubBranchID, stubVersionID)
+		err := api.AddVersionToBranch(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			stubBranchID,
+			stubVersionID,
+		)
 		assert.NoError(t, err)
 	})
 
@@ -624,19 +891,43 @@ func TestBranchAPI_AddVersionToBranch(t *testing.T) {
 		mockClient := &client.Client{BaseURL: "http://mock.server", HTTPClient: http.DefaultClient}
 		api := apis.NewBranchAPI(mockClient)
 
-		err := api.AddVersionToBranch(context.Background(), "", stubArtifactId, stubBranchID, stubVersionID)
+		err := api.AddVersionToBranch(
+			context.Background(),
+			"",
+			stubArtifactId,
+			stubBranchID,
+			stubVersionID,
+		)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Group ID")
 
-		err = api.AddVersionToBranch(context.Background(), stubGroupId, "", stubBranchID, stubVersionID)
+		err = api.AddVersionToBranch(
+			context.Background(),
+			stubGroupId,
+			"",
+			stubBranchID,
+			stubVersionID,
+		)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Artifact ID")
 
-		err = api.AddVersionToBranch(context.Background(), stubGroupId, stubArtifactId, "", stubVersionID)
+		err = api.AddVersionToBranch(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			"",
+			stubVersionID,
+		)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Branch ID")
 
-		err = api.AddVersionToBranch(context.Background(), stubGroupId, stubArtifactId, stubBranchID, "")
+		err = api.AddVersionToBranch(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			stubBranchID,
+			"",
+		)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Version")
 	})
@@ -644,13 +935,25 @@ func TestBranchAPI_AddVersionToBranch(t *testing.T) {
 	t.Run("Not Found", func(t *testing.T) {
 		mockErrorResponse := models.APIError{Status: http.StatusNotFound, Title: TitleNotFound}
 
-		server := setupMockServer(t, http.StatusNotFound, mockErrorResponse, expectedURL, http.MethodPost)
+		server := setupMockServer(
+			t,
+			http.StatusNotFound,
+			mockErrorResponse,
+			expectedURL,
+			http.MethodPost,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewBranchAPI(mockClient)
 
-		err := api.AddVersionToBranch(context.Background(), stubGroupId, stubArtifactId, stubBranchID, stubVersionID)
+		err := api.AddVersionToBranch(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			stubBranchID,
+			stubVersionID,
+		)
 		assert.Error(t, err)
 
 		assertAPIError(t, err, http.StatusNotFound, TitleNotFound)
@@ -659,28 +962,55 @@ func TestBranchAPI_AddVersionToBranch(t *testing.T) {
 	t.Run("Conflict", func(t *testing.T) {
 		mockErrorResponse := models.APIError{Status: http.StatusConflict, Title: TitleConflict}
 
-		server := setupMockServer(t, http.StatusConflict, mockErrorResponse, expectedURL, http.MethodPost)
+		server := setupMockServer(
+			t,
+			http.StatusConflict,
+			mockErrorResponse,
+			expectedURL,
+			http.MethodPost,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewBranchAPI(mockClient)
 
-		err := api.AddVersionToBranch(context.Background(), stubGroupId, stubArtifactId, stubBranchID, stubVersionID)
+		err := api.AddVersionToBranch(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			stubBranchID,
+			stubVersionID,
+		)
 		assert.Error(t, err)
 
 		assertAPIError(t, err, http.StatusConflict, TitleConflict)
 	})
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		mockErrorResponse := models.APIError{Status: http.StatusInternalServerError, Title: TitleInternalServerError}
+		mockErrorResponse := models.APIError{
+			Status: http.StatusInternalServerError,
+			Title:  TitleInternalServerError,
+		}
 
-		server := setupMockServer(t, http.StatusInternalServerError, mockErrorResponse, expectedURL, http.MethodPost)
+		server := setupMockServer(
+			t,
+			http.StatusInternalServerError,
+			mockErrorResponse,
+			expectedURL,
+			http.MethodPost,
+		)
 		defer server.Close()
 
 		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
 		api := apis.NewBranchAPI(mockClient)
 
-		err := api.AddVersionToBranch(context.Background(), stubGroupId, stubArtifactId, stubBranchID, stubVersionID)
+		err := api.AddVersionToBranch(
+			context.Background(),
+			stubGroupId,
+			stubArtifactId,
+			stubBranchID,
+			stubVersionID,
+		)
 		assert.Error(t, err)
 
 		assertAPIError(t, err, http.StatusInternalServerError, TitleInternalServerError)
@@ -715,10 +1045,15 @@ func TestNewBranchAPIIntegration(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Create a branch
-		branchInfo, err := branchAPI.CreateBranch(ctx, stubGroupId, generatedArtifactID, &models.CreateBranchRequest{
-			BranchID:    stubBranchID,
-			Description: stubDescription,
-		})
+		branchInfo, err := branchAPI.CreateBranch(
+			ctx,
+			stubGroupId,
+			generatedArtifactID,
+			&models.CreateBranchRequest{
+				BranchID:    stubBranchID,
+				Description: stubDescription,
+			},
+		)
 		assert.NoError(t, err)
 		assert.NotNil(t, branchInfo)
 		assert.Equal(t, stubBranchID, branchInfo.BranchId)
@@ -730,10 +1065,15 @@ func TestNewBranchAPIIntegration(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Create a branch
-		branchInfo, err := branchAPI.CreateBranch(ctx, stubGroupId, generatedArtifactID, &models.CreateBranchRequest{
-			BranchID:    stubBranchID,
-			Description: stubDescription,
-		})
+		branchInfo, err := branchAPI.CreateBranch(
+			ctx,
+			stubGroupId,
+			generatedArtifactID,
+			&models.CreateBranchRequest{
+				BranchID:    stubBranchID,
+				Description: stubDescription,
+			},
+		)
 		assert.NoError(t, err)
 		assert.NotNil(t, branchInfo)
 		assert.Equal(t, stubBranchID, branchInfo.BranchId)
@@ -754,17 +1094,27 @@ func TestNewBranchAPIIntegration(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Create a branch
-		branchInfo, err := branchAPI.CreateBranch(ctx, stubGroupId, generatedArtifactID, &models.CreateBranchRequest{
-			BranchID:    stubBranchID,
-			Description: stubDescription,
-		})
+		branchInfo, err := branchAPI.CreateBranch(
+			ctx,
+			stubGroupId,
+			generatedArtifactID,
+			&models.CreateBranchRequest{
+				BranchID:    stubBranchID,
+				Description: stubDescription,
+			},
+		)
 		assert.NoError(t, err)
 		assert.NotNil(t, branchInfo)
 		assert.Equal(t, stubBranchID, branchInfo.BranchId)
 		assert.Equal(t, stubDescription, branchInfo.Description)
 
 		// Get branch metadata
-		branch, err := branchAPI.GetBranchMetaData(ctx, stubGroupId, generatedArtifactID, stubBranchID)
+		branch, err := branchAPI.GetBranchMetaData(
+			ctx,
+			stubGroupId,
+			generatedArtifactID,
+			stubBranchID,
+		)
 		assert.NoError(t, err)
 		assert.NotNil(t, branch)
 		assert.Equal(t, stubBranchID, branch.BranchId)
@@ -776,10 +1126,15 @@ func TestNewBranchAPIIntegration(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Create a branch
-		branchInfo, err := branchAPI.CreateBranch(ctx, stubGroupId, generatedArtifactID, &models.CreateBranchRequest{
-			BranchID:    stubBranchID,
-			Description: stubDescription,
-		})
+		branchInfo, err := branchAPI.CreateBranch(
+			ctx,
+			stubGroupId,
+			generatedArtifactID,
+			&models.CreateBranchRequest{
+				BranchID:    stubBranchID,
+				Description: stubDescription,
+			},
+		)
 		assert.NoError(t, err)
 		assert.NotNil(t, branchInfo)
 		assert.Equal(t, stubBranchID, branchInfo.BranchId)
@@ -787,7 +1142,13 @@ func TestNewBranchAPIIntegration(t *testing.T) {
 
 		// Update branch metadata
 		updatedDescription := "Updated Description"
-		err = branchAPI.UpdateBranchMetaData(ctx, stubGroupId, generatedArtifactID, stubBranchID, updatedDescription)
+		err = branchAPI.UpdateBranchMetaData(
+			ctx,
+			stubGroupId,
+			generatedArtifactID,
+			stubBranchID,
+			updatedDescription,
+		)
 		assert.NoError(t, err)
 	})
 
@@ -796,10 +1157,15 @@ func TestNewBranchAPIIntegration(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Create a branch
-		branchInfo, err := branchAPI.CreateBranch(ctx, stubGroupId, generatedArtifactID, &models.CreateBranchRequest{
-			BranchID:    stubBranchID,
-			Description: stubDescription,
-		})
+		branchInfo, err := branchAPI.CreateBranch(
+			ctx,
+			stubGroupId,
+			generatedArtifactID,
+			&models.CreateBranchRequest{
+				BranchID:    stubBranchID,
+				Description: stubDescription,
+			},
+		)
 		assert.NoError(t, err)
 		assert.NotNil(t, branchInfo)
 		assert.Equal(t, stubBranchID, branchInfo.BranchId)
@@ -815,21 +1181,38 @@ func TestNewBranchAPIIntegration(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Create a branch
-		branchInfo, err := branchAPI.CreateBranch(ctx, stubGroupId, generatedArtifactID, &models.CreateBranchRequest{
-			BranchID:    stubBranchID,
-			Description: stubDescription,
-		})
+		branchInfo, err := branchAPI.CreateBranch(
+			ctx,
+			stubGroupId,
+			generatedArtifactID,
+			&models.CreateBranchRequest{
+				BranchID:    stubBranchID,
+				Description: stubDescription,
+			},
+		)
 		assert.NoError(t, err)
 		assert.NotNil(t, branchInfo)
 		assert.Equal(t, stubBranchID, branchInfo.BranchId)
 		assert.Equal(t, stubDescription, branchInfo.Description)
 
 		// Add version to branch
-		err = branchAPI.AddVersionToBranch(ctx, stubGroupId, generatedArtifactID, stubBranchID, stubVersionID)
+		err = branchAPI.AddVersionToBranch(
+			ctx,
+			stubGroupId,
+			generatedArtifactID,
+			stubBranchID,
+			stubVersionID,
+		)
 		assert.NoError(t, err)
 
 		// Get versions in branch
-		versions, err := branchAPI.GetVersionsInBranch(ctx, stubGroupId, generatedArtifactID, stubBranchID, nil)
+		versions, err := branchAPI.GetVersionsInBranch(
+			ctx,
+			stubGroupId,
+			generatedArtifactID,
+			stubBranchID,
+			nil,
+		)
 		assert.NoError(t, err)
 		assert.NotNil(t, versions)
 		assert.Len(t, versions, 1)
