@@ -49,37 +49,6 @@ func TestSystemAPI_GetSystemInfo(t *testing.T) {
 	})
 }
 
-func TestSystemAPI_GetResourceLimitInfo(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
-		mockResponse := models.SystemResourceLimitInfoResponse{MaxArtifactsCount: -1}
-		server := setupMockServer(t, http.StatusOK, mockResponse, "/system/limits", http.MethodGet)
-		defer server.Close()
-
-		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
-		api := apis.NewSystemAPI(mockClient)
-
-		result, err := api.GetResourceLimitInfo(context.Background())
-
-		assert.NoError(t, err)
-		assert.Equal(t, mockResponse, *result)
-	})
-
-	t.Run("InternalServerError", func(t *testing.T) {
-		server := setupMockServer(t, http.StatusInternalServerError, models.APIError{
-			Status: http.StatusInternalServerError, Title: "Internal Server Error",
-		}, "/system/limits", http.MethodGet)
-		defer server.Close()
-
-		mockClient := &client.Client{BaseURL: server.URL, HTTPClient: server.Client()}
-		api := apis.NewSystemAPI(mockClient)
-
-		result, err := api.GetResourceLimitInfo(context.Background())
-
-		assertAPIError(t, err, http.StatusInternalServerError, "Internal Server Error")
-		assert.Nil(t, result)
-	})
-}
-
 func TestSystemAPI_GetUIConfig(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockResponse := models.SystemUIConfigResponse{Ui: models.UIConfig{ContextPath: "/"}}
@@ -181,36 +150,14 @@ func TestSystemAPI_All_Integration(t *testing.T) {
 		expected := &models.SystemInfoResponse{
 			Name:        "Apicurio Registry (In Memory)",
 			Description: "High performance, runtime registry for schemas and API designs.",
-			Version:     "3.0.5",
-			BuiltOn:     "2024-12-03T12:31:33Z",
+			Version:     "3.0.12",
+			BuiltOn:     "2025-08-13T23:25:31Z",
 		}
 
 		result, err := api.GetSystemInfo(ctx)
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Equal(t, expected, result)
-	})
-
-	t.Run("GetResourceLimitInfo", func(t *testing.T) {
-		expected := &models.SystemResourceLimitInfoResponse{
-			MaxTotalSchemasCount:              -1,
-			MaxSchemaSizeBytes:                -1,
-			MaxArtifactsCount:                 -1,
-			MaxVersionsPerArtifactCount:       -1,
-			MaxArtifactPropertiesCount:        -1,
-			MaxPropertyKeySizeBytes:           -1,
-			MaxPropertyValueSizeBytes:         -1,
-			MaxArtifactLabelsCount:            -1,
-			MaxLabelSizeBytes:                 -1,
-			MaxArtifactNameLengthChars:        -1,
-			MaxArtifactDescriptionLengthChars: -1,
-			MaxRequestsPerSecondCount:         -1,
-		}
-
-		result, err := api.GetResourceLimitInfo(ctx)
-		assert.NoError(t, err)
-		assert.NotNil(t, result)
-		assert.EqualValues(t, expected, result)
 	})
 
 	t.Run("GetUIConfig", func(t *testing.T) {

@@ -38,27 +38,6 @@ func (api *SystemAPI) GetSystemInfo(ctx context.Context) (*models.SystemInfoResp
 	return &systemInfo, nil
 }
 
-// GetResourceLimitInfo gets the resource limit info
-// This operation retrieves the list of limitations on used resources, that are applied on the current instance of Registry.
-// See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/System/operation/getResourceLimits
-func (api *SystemAPI) GetResourceLimitInfo(
-	ctx context.Context,
-) (*models.SystemResourceLimitInfoResponse, error) {
-	urlPath := fmt.Sprintf("%s/system/limits", api.Client.BaseURL)
-	resp, err := api.executeRequest(ctx, http.MethodGet, urlPath, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var resourceLimitInfo models.SystemResourceLimitInfoResponse
-	if err := handleResponse(resp, http.StatusOK, &resourceLimitInfo); err != nil {
-		return nil, err
-	}
-
-	return &resourceLimitInfo, nil
-
-}
-
 // GetUIConfig gets the UI config
 // Returns the UI configuration properties for this server. The registry UI can be connected to a backend using just a URL. The rest of the UI configuration can then be fetched from the backend using this operation. This allows UI and backend to both be configured in the same place.
 // See https://www.apicur.io/registry/docs/apicurio-registry/3.0.x/assets-attachments/registry-rest-api.htm#tag/System/operation/getUIConfig
