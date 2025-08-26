@@ -46,7 +46,7 @@ jobs:
 
     services:
       apicurio:
-        image: apicurio/apicurio-registry:3.0.5
+        image: apicurio/apicurio-registry:3.0.12
         ports:
           - 9080:8080
         options: >-
