@@ -1,9 +1,13 @@
 package client
 
 import (
+	"log"
 	"net"
 	"net/http"
+	"os"
 	"time"
+
+	retryablehttp "github.com/hashicorp/go-retryablehttp"
 )
 
 // Client is a reusable HTTP client for the SDK.
@@ -15,6 +19,25 @@ type Client struct {
 
 // Option is a functional option for configuring the Client.
 type Option func(*Client)
+
+// WithRetryableHTTP configures the client to use hashicorp/go-retryablehttp.
+func WithRetryableHTTP(cfg *retryablehttp.Client) Option {
+	return func(c *Client) {
+		var rhc *retryablehttp.Client
+		if cfg != nil {
+			rhc = cfg
+		} else {
+			// Default configuration
+			rhc = retryablehttp.NewClient()
+			rhc.RetryMax = 3
+			rhc.RetryWaitMin = 200 * time.Millisecond
+			rhc.RetryWaitMax = 5 * time.Second
+			rhc.Logger = log.New(os.Stderr, "retryablehttp: ", log.LstdFlags)
+		}
+		// StandardClient wraps retryablehttp.Client as a *http.Client
+		c.HTTPClient = rhc.StandardClient()
+	}
+}
 
 // WithHTTPClient is an option for setting a custom http.Client.
 func WithHTTPClient(httpClient *http.Client) Option {

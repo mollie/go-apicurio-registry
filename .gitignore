@@ -29,3 +29,6 @@ Thumbs.db
 
 # Logs and debugging files
 *.log
+
+# Local Database volume
+data

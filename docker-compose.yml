@@ -1,27 +1,86 @@
 version: '3.8'
 
 services:
-  apicurio-registry:
-    image: apicurio/apicurio-registry:3.0.5
+  mysql:
+    image: mysql:8.0
+    container_name: registry-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: apicurio
+      MYSQL_USER: apicurio
+      MYSQL_PASSWORD: apicurio
     ports:
-      - "9080:8080"
-      - "8080:8080"
+      - "3306:3306"
+    volumes:
+      - ./data:/var/lib/mysql
+
+  schema-registry-ro:
+    image: apicurio/apicurio-registry:3.0.12
+    container_name: apicurio-registry-ro
+    restart: always
+    depends_on:
+      - mysql
     environment:
       LOG_LEVEL: DEBUG
+      APICURIO_REST_MUTABILITY_ARTIFACT_VERSION_CONTENT_ENABLED: "false"
+      APICURIO_REST_DELETION_ARTIFACT_ENABLED: "false"
+      APICURIO_REST_DELETION_ARTIFACT_VERSION_ENABLED: "false"
+      APICURIO_REST_DELETION_GROUP_ENABLED: "false"
+      APICURIO_RULES_GLOBAL_COMPATIBILITY: "BACKWARD"
+      APICURIO_DATASOURCE_URL: "jdbc:mysql://mysql:3306/apicurio"
+      APICURIO_DATASOURCE_USERNAME: "apicurio"
+      APICURIO_DATASOURCE_PASSWORD: "apicurio"
+      QUARKUS_HTTP_CORS: "true"
       QUARKUS_HTTP_CORS_ORIGINS: '*' # Allow CORS from all origins
-      QUARKUS_OIDC_TENANT_ENABLED: "false"
-      QUARKUS_OIDC_AUTH_SERVER_URL : "https://trial-2902165.okta.com"
-      APICURIO_UI_AUTH_OIDC_CLIENT_ID: "0oamjivtaeE6mt1Ey697"
-      APICURIO_UI_AUTH_OIDC_REDIRECT_URI: "http://localhost:9090"
+      QUARKUS_HTTP_CORS_METHODS: "GET,POST,PUT,DELETE,OPTIONS"
+      QUARKUS_HTTP_CORS_HEADERS: "accept,authorization,content-type,x-requested-with,origin,referer,user-agent"
+      QUARKUS_HTTP_CORS_ACCESS_CONTROL_ALLOW_CREDENTIALS: "true"
+      APICURIO_STORAGE_SQL_KIND: "mysql"
+      APICURIO_STORAGE_KIND: "sql"
+      APICURIO_STORAGE_SQL_INIT: "true"
+    ports:
+      - "2080:8080"
+
+  schema-registry-rw:
+    image: apicurio/apicurio-registry:3.0.12
+    container_name: apicurio-registry-rw
+    restart: always
+    depends_on:
+      - mysql
+    environment:
+      LOG_LEVEL: DEBUG
       APICURIO_REST_MUTABILITY_ARTIFACT_VERSION_CONTENT_ENABLED: "true"
       APICURIO_REST_DELETION_ARTIFACT_ENABLED: "true"
       APICURIO_REST_DELETION_ARTIFACT_VERSION_ENABLED: "true"
       APICURIO_REST_DELETION_GROUP_ENABLED: "true"
-
-  apicurio-ui:
-    image: apicurio/apicurio-registry-ui:3.0.5
+      APICURIO_RULES_GLOBAL_COMPATIBILITY: "BACKWARD"
+      APICURIO_DATASOURCE_URL: "jdbc:mysql://mysql:3306/apicurio"
+      APICURIO_DATASOURCE_USERNAME: "apicurio"
+      APICURIO_DATASOURCE_PASSWORD: "apicurio"
+      QUARKUS_HTTP_CORS: "true"
+      QUARKUS_HTTP_CORS_ORIGINS: '*' # Allow CORS from all origins
+      QUARKUS_HTTP_CORS_METHODS: "GET,POST,PUT,DELETE,OPTIONS"
+      QUARKUS_HTTP_CORS_HEADERS: "accept,authorization,content-type,x-requested-with,origin,referer,user-agent"
+      QUARKUS_HTTP_CORS_ACCESS_CONTROL_ALLOW_CREDENTIALS: "true"
+      APICURIO_STORAGE_SQL_KIND: "mysql"
+      APICURIO_STORAGE_KIND: "sql"
+      APICURIO_STORAGE_SQL_INIT: "true"
     ports:
-      - "9090:8080"
-    environment:
-      REGISTRY_API_URL: "http://localhost:9080/apis/registry/v3"
+      - "3080:8080"
 
+  schema-registry-ui-ro:
+    image: apicurio/apicurio-registry-ui:3.0.12
+    ports:
+      - "2090:8080"
+    environment:
+      REGISTRY_API_URL: "http://localhost:2080/apis/registry/v3"
+      REGISTRY_FEATURE_READ_ONLY: "true"
+
+  schema-registry-ui-rw:
+    image: apicurio/apicurio-registry-ui:3.0.12
+    ports:
+      - "3090:8080"
+    environment:
+      REGISTRY_API_URL: "http://localhost:3080/apis/registry/v3"
+      REGISTRY_FEATURE_READ_ONLY: "false"
